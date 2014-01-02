@@ -21,15 +21,14 @@
 bl_info = {
     "name": "Metasequoia format (.mqo)",
     "author": "50thomatoes50",
-    "blender": (2, 58, 0),
+    "blender": (2, 65, 0),
     "location": "File > Import-Export",
     "description": "Import-Export MQO, UV's, "
                    "materials and textures",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/"
                 "Scripts/Import-Export/MQO",
-    "tracker_url": "",
-    #"support": 'OFFICIAL',
+    "tracker_url": "https://github.com/50thomatoes50/blender.io_mqo/issues",
     "category": "Import-Export"}
 
 
