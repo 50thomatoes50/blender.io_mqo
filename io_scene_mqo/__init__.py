@@ -16,6 +16,10 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+# Script copyright (C) Thomas PORTASSAU (50thomatoes50)
+# Contributors: Campbell Barton, Jiri Hnidek, Paolo Ciccone, Thomas Larsson, http://blender.stackexchange.com/users/185/adhi
+
+
 # <pep8-80 compliant>
 
 bl_info = {
@@ -73,6 +77,16 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         name = "Rotate 90 degrees",
         description="Rotate mesh to Y up",
         default = True)
+    
+    invert = bpy.props.BoolProperty(
+        name = "Correction of inverted faces",
+        description="Correction of inverted faces",
+        default = True)
+    
+    edge = bpy.props.BoolProperty(
+        name = "Export lost edge",
+        description="Export edge with is not attached to a polygon",
+        default = True)
  
     scale = bpy.props.FloatProperty(
         name = "Scale", 
@@ -85,7 +99,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         export_mqo.export_mqo(
             self.properties.filepath, 
             context.object, 
-            self.rot90, 
+            self.rot90, self.invert, self.edge,
             1.0/self.scale)
         return {'FINISHED'}
  

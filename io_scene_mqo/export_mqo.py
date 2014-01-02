@@ -16,6 +16,9 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+# Script copyright (C) Thomas PORTASSAU (50thomatoes50)
+# Contributors: Campbell Barton, Jiri Hnidek, Paolo Ciccone, Thomas Larsson, http://blender.stackexchange.com/users/185/adhi
+
 # <pep8 compliant>
 """
 This script exports a Metasequoia(*.mqo) files to Blender.
@@ -39,7 +42,7 @@ import mathutils
 import bpy_extras.io_utils
 
 
-def export_mqo(filepath, ob, rot90, scale):
+def export_mqo(filepath, ob, rot90, invert, edge, scale):
     
         # Exit edit mode before exporting, so current object states are exported properly.
     #if bpy.ops.object.mode_set.poll():
@@ -68,16 +71,36 @@ def export_mqo(filepath, ob, rot90, scale):
         #else:
         fp.write("\t\t%.5f %.5f %.5f\n" % (x[0], x[1], x[2]))
     fp.write("\t}\n")
-    
-    faces = me.faces
-    
-    fp.write("\tface %i {\n" % (len(faces)))
+
+
+
+    faces = me.polygons
+    lostEdges = 0
+    for e in me.edges:
+        if e.is_loose:
+            lostEdges+=1
+    if edge:
+        fp.write("\tface %i {\n" % (len(faces)+lostEdges))
+        for e in me.edges:
+            if e.is_loose:
+                fp.write("\t\t2 V(%i %i)\n" % (e.vertices[0], e.vertices[1]))
+    else:
+        fp.write("\tface %i {\n" % (len(faces)))
     for f in faces:
         vs = f.vertices
-        fp.write("f %d %d %d" % (vs[0]+1, vs[1]+1, vs[2]+1))
+        if len(f.vertices) == 3:
+            if invert:
+                fp.write("\t\t3 V(%d %d %d)\n" % (vs[0], vs[2], vs[1]))
+            else:
+                fp.write("\t\t3 V(%d %d %d)\n" % (vs[0], vs[1], vs[2]))
         if len(f.vertices) == 4:
-            fp.write(" %d\n" % (vs[3]+1))
-    fp.write("\n")
+            if invert:
+                fp.write("\t\t4 V(%d %d %d %d)\n" % (vs[0], vs[3], vs[2], vs[1]))
+            else:
+                fp.write("\t\t4 V(%d %d %d %d)\n" % (vs[0], vs[1], vs[2], vs[3]))
+                
+    
+
     fp.write("\t}\n")
     
 
