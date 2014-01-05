@@ -87,6 +87,11 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         name = "Export lost edge",
         description="Export edge with is not attached to a polygon",
         default = True)
+    
+    only_selec = bpy.props.BoolProperty(
+        name = "Export only object slected",
+        description="Export only object slected",
+        default = True)
  
     uv_exp = bpy.props.BoolProperty(
         name = "Export UV (NOT WORKING!!)",
@@ -105,7 +110,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
             self.properties.filepath, 
             context.object, 
             self.rot90, self.invert, self.edge, self.uv_exp,
-            1.0/self.scale)
+            1.0/self.scale, self.only_selec)
         return {'FINISHED'}
  
     def invoke(self, context, event):

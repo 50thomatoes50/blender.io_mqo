@@ -40,9 +40,10 @@ import pprint
 import bpy
 import mathutils
 import bpy_extras.io_utils
+import bmesh
 
 
-def export_mqo(filepath, ob, rot90, invert, edge, uv_exp, scale):
+def export_mqo(filepath, ob, rot90, invert, edge, uv_exp, scale, use_selection):
     
         # Exit edit mode before exporting, so current object states are exported properly.
     #if bpy.ops.object.mode_set.poll():
@@ -50,18 +51,36 @@ def export_mqo(filepath, ob, rot90, invert, edge, uv_exp, scale):
         
     name = os.path.basename(filepath)
     realpath = os.path.realpath(os.path.expanduser(filepath))
-    fp = open(realpath, 'w')    
+    fp = open(realpath, 'w')
+    fw = file.write
     print('Exporting %s' % realpath)
- 
-    if not ob or ob.type != 'MESH':
-        raise NameError('Cannot export: active object %s is not a mesh.' % ob)
-    me = ob.data
+     
+    fw("Metasequoia Document\nFormat Text Ver 1.0\n\nScene {\n	pos 0.0000 0.0000 1500.0000\n	lookat 0.0000 0.0000 0.0000\n	head -0.5236\n	pich 0.5236\n	bank 0.0000\n	ortho 0\n	zoom2 5.0000\n	amb 0.250 0.250 0.250\n	dirlights 1 {\n		light {\n			dir 0.408 0.408 0.816\n			color 1.000 1.000 1.000\n		}\n	}\n}\n")
+
+    if use_selection:
+        objects = context.selected_objects
+    else:
+        objects = scene.objects
     
-    fp.write("Metasequoia Document\nFormat Text Ver 1.0\n\nScene {\n	pos 0.0000 0.0000 1500.0000\n	lookat 0.0000 0.0000 0.0000\n	head -0.5236\n	pich 0.5236\n	bank 0.0000\n	ortho 0\n	zoom2 5.0000\n	amb 0.250 0.250 0.250\n	dirlights 1 {\n		light {\n			dir 0.408 0.408 0.816\n			color 1.000 1.000 1.000\n		}\n	}\n}\n")
-   
-   
-   
-    fp.write("Object \"%s\" {\n\tdepth 0\n\tfolding 0\n\tscale 1.000000 1.000000 1.000000\n\trotation 0.000000 0.000000 0.000000\n\ttranslation 0.000000 0.000000 0.000000\n\tvisible 15\n\tlocking 0\n\tshading 1\n\tfacet 59.5\n\tcolor 0.898 0.498 0.698\n\tcolor_type 0\n" % (me.name))
+    for obj in objects:
+        if obj.type == 'MESH':
+            fp.write("Object \"%s\" {\n\tdepth 0\n\tfolding 0\n\tscale 1.000000 1.000000 1.000000\n\trotation 0.000000 0.000000 0.000000\n\ttranslation 0.000000 0.000000 0.000000\n\tvisible 15\n\tlocking 0\n\tshading 1\n\tfacet 59.5\n\tcolor 0.898 0.498 0.698\n\tcolor_type 0\n" % (obj.name))
+            obj_exp(fw, obj)
+            
+    fp.write("}\nEof\n")
+    print('%s successfully exported' % realpath)
+    fp.close()
+    return
+
+def obj_exp(fw, obj):
+      
+    me = obj.data
+    if obj.mode == 'EDIT':
+        bm_orig = bmesh.from_edit_mesh(me)
+        bm = bm_orig.copy()
+    else:
+        bm = bmesh.new()
+        bm.from_mesh(me)
 
     fp.write("\tvertex %i {\n"% (len(me.vertices)))
     for v in me.vertices:
@@ -121,9 +140,3 @@ def export_mqo(filepath, ob, rot90, invert, edge, uv_exp, scale):
         fp.write("\n")
 
     fp.write("\t}\n")
-    
-
-    fp.write("}\nEof\n")
-    print('%s successfully exported' % realpath)
-    fp.close()
-    return
