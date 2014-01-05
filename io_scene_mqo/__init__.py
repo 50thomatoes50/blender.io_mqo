@@ -88,6 +88,11 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         description="Export edge with is not attached to a polygon",
         default = True)
  
+    uv_exp = bpy.props.BoolProperty(
+        name = "Export UV (NOT WORKING!!)",
+        description="Export UV (NOT WORKING!!)",
+        default = False)
+ 
     scale = bpy.props.FloatProperty(
         name = "Scale", 
         description="Scale mesh", 
@@ -99,7 +104,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         export_mqo.export_mqo(
             self.properties.filepath, 
             context.object, 
-            self.rot90, self.invert, self.edge,
+            self.rot90, self.invert, self.edge, self.uv_exp,
             1.0/self.scale)
         return {'FINISHED'}
  

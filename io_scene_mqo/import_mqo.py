@@ -19,7 +19,7 @@
 # <pep8 compliant>
 
 # Script copyright (C) Thomas PORTASSAU (50thomatoes50)
-# Contributors: Campbell Barton, Jiri Hnidek, Paolo Ciccone, Thomas Larsson
+# Contributors: Campbell Barton, Jiri Hnidek, Paolo Ciccone, Thomas Larsson, http://blender.stackexchange.com/users/185/adhi
 #http://wiki.blender.org/index.php/Dev:2.5/Py/Scripts/Cookbook/Code_snippets/Multi-File_packages#Simple_obj_importer_and_exporter
 
 """

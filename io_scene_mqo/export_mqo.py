@@ -36,13 +36,13 @@ http://wiki.blender.org/index.php/Dev:2.5/Py/Scripts/Cookbook/Code_snippets/Mult
 
 import os
 import time
-
+import pprint
 import bpy
 import mathutils
 import bpy_extras.io_utils
 
 
-def export_mqo(filepath, ob, rot90, invert, edge, scale):
+def export_mqo(filepath, ob, rot90, invert, edge, uv_exp, scale):
     
         # Exit edit mode before exporting, so current object states are exported properly.
     #if bpy.ops.object.mode_set.poll():
@@ -73,8 +73,8 @@ def export_mqo(filepath, ob, rot90, invert, edge, scale):
     fp.write("\t}\n")
 
 
-
-    faces = me.polygons
+    me.update(False, True)
+    faces = me.tessfaces
     lostEdges = 0
     for e in me.edges:
         if e.is_loose:
@@ -86,20 +86,39 @@ def export_mqo(filepath, ob, rot90, invert, edge, scale):
                 fp.write("\t\t2 V(%i %i)\n" % (e.vertices[0], e.vertices[1]))
     else:
         fp.write("\tface %i {\n" % (len(faces)))
+        
+    uvtex = me.uv_textures    
     for f in faces:
         vs = f.vertices
         if len(f.vertices) == 3:
             if invert:
-                fp.write("\t\t3 V(%d %d %d)\n" % (vs[0], vs[2], vs[1]))
+                fp.write("\t\t3 V(%d %d %d)" % (vs[0], vs[2], vs[1]))
             else:
-                fp.write("\t\t3 V(%d %d %d)\n" % (vs[0], vs[1], vs[2]))
+                fp.write("\t\t3 V(%d %d %d)" % (vs[0], vs[1], vs[2]))
         if len(f.vertices) == 4:
             if invert:
-                fp.write("\t\t4 V(%d %d %d %d)\n" % (vs[0], vs[3], vs[2], vs[1]))
+                fp.write("\t\t4 V(%d %d %d %d)" % (vs[0], vs[3], vs[2], vs[1]))
             else:
-                fp.write("\t\t4 V(%d %d %d %d)\n" % (vs[0], vs[1], vs[2], vs[3]))
+                fp.write("\t\t4 V(%d %d %d %d)" % (vs[0], vs[1], vs[2], vs[3]))
                 
-    
+        if (len(uvtex) > 0 and uv_exp):
+            print("\n######Debug######\n")
+            debug =[locals(),faces[1],me.uv_textures,me.uv_textures.get,me.tessface_uv_textures]
+            for d in debug:
+                print("\n####  %s  ####\n" % (d))
+                pprint.pprint(d)
+                pprint.pprint(dir(d))
+                print("\n\n")
+                
+
+            
+            '''data = uvtex.data["2"]
+            fp.write("UV( %.5f %.5f %.5f %.5f %.5f %.5f" % (data.uv1[0], data.uv1[1], data.uv2[0], data.uv2[1], data.uv3[0], data.uv3[1]))
+            if len(f.vertices) == 4:
+                fp.write(" %.5f %.5f)\n" % (data.uv4[0], data.uv4[1]))
+            else:
+                fp.write(")\n")'''
+        fp.write("\n")
 
     fp.write("\t}\n")
     
