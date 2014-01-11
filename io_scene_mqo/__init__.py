@@ -89,9 +89,14 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         default = True)
  
     uv_exp = bpy.props.BoolProperty(
-        name = "Export UV (NOT WORKING!!)",
-        description="Export UV (NOT WORKING!!)",
-        default = False)
+        name = "Export UV",
+        description="Export UV",
+        default = True)
+    
+    uv_cor = bpy.props.BoolProperty(
+        name = "Convert UV",
+        description="invert UV map to be in the direction has metasequoia",
+        default = True)
  
     scale = bpy.props.FloatProperty(
         name = "Scale", 
@@ -104,7 +109,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         export_mqo.export_mqo(
             self.properties.filepath, 
             context.object, 
-            self.rot90, self.invert, self.edge, self.uv_exp,
+            self.rot90, self.invert, self.edge, self.uv_exp, self.uv_cor,
             1.0/self.scale)
         return {'FINISHED'}
  
