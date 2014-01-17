@@ -74,9 +74,9 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         maxlen= 1024, default= "")
  
     rot90 = bpy.props.BoolProperty(
-        name = "Rotate 90 degrees",
-        description="Rotate mesh to Y up",
-        default = True)
+        name = "Up axis correction",
+        description="Blender up axis is Z but metasequoia up axis is Y\nExporter will invert value to be in the correcte direction",
+        default = False)
     
     invert = bpy.props.BoolProperty(
         name = "Correction of inverted faces",
