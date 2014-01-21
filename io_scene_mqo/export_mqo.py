@@ -38,12 +38,11 @@ import os
 import time
 import pprint
 import bpy
-import mathutils
-import bpy_extras.io_utils
+import bpy_extras
 import bmesh
 
 
-def export_mqo(filepath, ob, rot90, invert, edge, uv_exp, scale, use_selection):
+def export_mqo(filepath, objects, rot90, invert, edge, uv_exp, scale, use_selection):
     
         # Exit edit mode before exporting, so current object states are exported properly.
     #if bpy.ops.object.mode_set.poll():
@@ -52,28 +51,25 @@ def export_mqo(filepath, ob, rot90, invert, edge, uv_exp, scale, use_selection):
     name = os.path.basename(filepath)
     realpath = os.path.realpath(os.path.expanduser(filepath))
     fp = open(realpath, 'w')
-    fw = file.write
+    fw = fp.write
     print('Exporting %s' % realpath)
      
     fw("Metasequoia Document\nFormat Text Ver 1.0\n\nScene {\n	pos 0.0000 0.0000 1500.0000\n	lookat 0.0000 0.0000 0.0000\n	head -0.5236\n	pich 0.5236\n	bank 0.0000\n	ortho 0\n	zoom2 5.0000\n	amb 0.250 0.250 0.250\n	dirlights 1 {\n		light {\n			dir 0.408 0.408 0.816\n			color 1.000 1.000 1.000\n		}\n	}\n}\n")
-
-    if use_selection:
-        objects = context.selected_objects
-    else:
-        objects = scene.objects
+    
     
     for obj in objects:
         if obj.type == 'MESH':
-            fp.write("Object \"%s\" {\n\tdepth 0\n\tfolding 0\n\tscale 1.000000 1.000000 1.000000\n\trotation 0.000000 0.000000 0.000000\n\ttranslation 0.000000 0.000000 0.000000\n\tvisible 15\n\tlocking 0\n\tshading 1\n\tfacet 59.5\n\tcolor 0.898 0.498 0.698\n\tcolor_type 0\n" % (obj.name))
-            obj_exp(fw, obj)
+            obj_exp(fw, obj, scale)
             
-    fp.write("}\nEof\n")
+    fw("\nEof\n")
     print('%s successfully exported' % realpath)
     fp.close()
     return
 
-def obj_exp(fw, obj):
-      
+def obj_exp(fw, obj, scale):
+    
+    fw("Object \"%s\" {\n\tdepth 0\n\tfolding 0\n\tscale 1.000000 1.000000 1.000000\n\trotation 0.000000 0.000000 0.000000\n\ttranslation 0.000000 0.000000 0.000000\n\tvisible 15\n\tlocking 0\n\tshading 1\n\tfacet 59.5\n\tcolor 0.898 0.498 0.698\n\tcolor_type 0\n" % (obj.name))
+ 
     me = obj.data
     if obj.mode == 'EDIT':
         bm_orig = bmesh.from_edit_mesh(me)
@@ -82,61 +78,25 @@ def obj_exp(fw, obj):
         bm = bmesh.new()
         bm.from_mesh(me)
 
-    fp.write("\tvertex %i {\n"% (len(me.vertices)))
-    for v in me.vertices:
+    fw("\tvertex %i {\n"% (len(bm.verts)))
+    for v in bm.verts:
         x = scale*v.co
         #if rot90:
         #    fp.write("v %.5f %.5f %.5f\n" % (x[0], x[2], -x[1]))
         #else:
-        fp.write("\t\t%.5f %.5f %.5f\n" % (x[0], x[1], x[2]))
-    fp.write("\t}\n")
+        fw("\t\t%.5f %.5f %.5f\n" % (x[0], x[1], x[2]))
+    fw("\t}\n")
+    
+    
+    '''fw("\tface %i {\n"% (len(bm.faces)))
+    f = fv = None
+    for f in bm.faces:
+        fw("\t\t%i (" % len((f.verts[:]))
+        for fv in f.verts:       
+            fw("%d" % (fv.index))
+        fw(")")
+        ## to do : add uv
+    fw("\n")
+    fw("\t}\n")'''
 
-
-    me.update(False, True)
-    faces = me.tessfaces
-    lostEdges = 0
-    for e in me.edges:
-        if e.is_loose:
-            lostEdges+=1
-    if edge:
-        fp.write("\tface %i {\n" % (len(faces)+lostEdges))
-        for e in me.edges:
-            if e.is_loose:
-                fp.write("\t\t2 V(%i %i)\n" % (e.vertices[0], e.vertices[1]))
-    else:
-        fp.write("\tface %i {\n" % (len(faces)))
-        
-    uvtex = me.uv_textures    
-    for f in faces:
-        vs = f.vertices
-        if len(f.vertices) == 3:
-            if invert:
-                fp.write("\t\t3 V(%d %d %d)" % (vs[0], vs[2], vs[1]))
-            else:
-                fp.write("\t\t3 V(%d %d %d)" % (vs[0], vs[1], vs[2]))
-        if len(f.vertices) == 4:
-            if invert:
-                fp.write("\t\t4 V(%d %d %d %d)" % (vs[0], vs[3], vs[2], vs[1]))
-            else:
-                fp.write("\t\t4 V(%d %d %d %d)" % (vs[0], vs[1], vs[2], vs[3]))
-                
-        if (len(uvtex) > 0 and uv_exp):
-            print("\n######Debug######\n")
-            debug =[locals(),faces[1],me.uv_textures,me.uv_textures.get,me.tessface_uv_textures]
-            for d in debug:
-                print("\n####  %s  ####\n" % (d))
-                pprint.pprint(d)
-                pprint.pprint(dir(d))
-                print("\n\n")
-                
-
-            
-            '''data = uvtex.data["2"]
-            fp.write("UV( %.5f %.5f %.5f %.5f %.5f %.5f" % (data.uv1[0], data.uv1[1], data.uv2[0], data.uv2[1], data.uv3[0], data.uv3[1]))
-            if len(f.vertices) == 4:
-                fp.write(" %.5f %.5f)\n" % (data.uv4[0], data.uv4[1]))
-            else:
-                fp.write(")\n")'''
-        fp.write("\n")
-
-    fp.write("\t}\n")
+    fw("}\n")

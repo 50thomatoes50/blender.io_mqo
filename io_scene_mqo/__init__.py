@@ -108,7 +108,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         from . import export_mqo
         export_mqo.export_mqo(
             self.properties.filepath, 
-            context.object, 
+            context.scene.objects, 
             self.rot90, self.invert, self.edge, self.uv_exp,
             1.0/self.scale, self.only_selec)
         return {'FINISHED'}

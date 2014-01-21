@@ -1,11 +1,14 @@
 blender.io_mqo : Blender importer and exporter for Metasequia files (.mqo)
 ==============
 
+This exporter use bmesh api
+
 feature for exporter
 --------------
 - [x] Export vertices
-- [x] Export all edges (in near future i want to export only edges which are not used by a polygon
+- [ ] Export lose edges
 - [ ] Export polygon
+- [ ] Material/texture
 - [ ] UV map
 - [ ] Modifier (Mirror / subdivision surface)
 
