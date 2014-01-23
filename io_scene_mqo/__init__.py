@@ -76,12 +76,12 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
     rot90 = bpy.props.BoolProperty(
         name = "Up axis correction",
         description="Blender up axis is Z but metasequoia up axis is Y\nExporter will invert value to be in the correcte direction",
-        default = False)
+        default = True)
     
     invert = bpy.props.BoolProperty(
         name = "Correction of inverted faces",
         description="Correction of inverted faces",
-        default = True)
+        default = False)
     
     edge = bpy.props.BoolProperty(
         name = "Export lost edge",
@@ -97,6 +97,11 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         name = "Convert UV",
         description="invert UV map to be in the direction has metasequoia",
         default = True)
+        
+    mat_exp = bpy.props.BoolProperty(
+        name = "Export Materials",
+        description="...",
+        default = True)
  
     scale = bpy.props.FloatProperty(
         name = "Scale", 
@@ -108,8 +113,8 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         from . import export_mqo
         export_mqo.export_mqo(
             self.properties.filepath, 
-            context.object, 
-            self.rot90, self.invert, self.edge, self.uv_exp, self.uv_cor,
+            context.scene.objects, 
+            self.rot90, self.invert, self.edge, self.uv_exp, self.uv_cor, self.mat_exp,
             1.0/self.scale)
         return {'FINISHED'}
  
