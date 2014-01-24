@@ -1,4 +1,4 @@
-# ##### BEGIN GPL LICENSE BLOCK #####
+﻿# ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -102,6 +102,11 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         name = "Export Materials",
         description="...",
         default = True)
+    
+    mod_exp = bpy.props.BoolProperty(
+        name = "Export Modifier",
+        description="Export modifier like mirror or/and subdivision surface",
+        default = True)
  
     scale = bpy.props.FloatProperty(
         name = "Scale", 
@@ -114,7 +119,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         export_mqo.export_mqo(
             self.properties.filepath, 
             context.scene.objects, 
-            self.rot90, self.invert, self.edge, self.uv_exp, self.uv_cor, self.mat_exp,
+            self.rot90, self.invert, self.edge, self.uv_exp, self.uv_cor, self.mat_exp, self.mod_exp,
             1.0/self.scale)
         return {'FINISHED'}
  
