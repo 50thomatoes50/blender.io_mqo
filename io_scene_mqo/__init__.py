@@ -39,8 +39,8 @@ bl_info = {
 #http://wiki.blender.org/index.php/Dev:2.5/Py/Scripts/Cookbook/Code_snippets/Multi-File_packages#init_.py
 if "bpy" in locals():
     import imp
-    #if "import_mqo" in locals():
-    #    imp.reload(import_mqo)
+    if "import_mqo" in locals():
+        imp.reload(import_mqo)
     if "export_mqo" in locals():
         imp.reload(export_mqo)
 
@@ -127,10 +127,48 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
+class ImportMQO(bpy.types.Operator, ExportHelper):
+    bl_idname = "io_import_scene.mqo"
+    bl_description = 'Import from mqo file format (.mqo)'
+    bl_label = "Import mqo"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+ 
+    # From ExportHelper. Filter filenames.
+    filename_ext = ".mqo"
+    filter_glob = StringProperty(default="*.mqo", options={'HIDDEN'})
+ 
+    filepath = bpy.props.StringProperty(
+        name="File Path", 
+        description="File path used for exporting the mqo file", 
+        maxlen= 1024, default= "")
+ 
+    rot90 = bpy.props.BoolProperty(
+        name = "Up axis correction",
+        description="Blender up axis is Z but metasequoia up axis is Y\nExporter will invert value to be in the correcte direction",
+        default = True)
+ 
+    scale = bpy.props.FloatProperty(
+        name = "Scale", 
+        description="Scale mesh", 
+        default = 1, min = 0.001, max = 1000.0)
+ 
+    def execute(self, context):
+        print("Load", self.properties.filepath)
+        from . import import_mqo
+        import_mqo.import_mqo(
+            self.properties.filepath, 
+            self.rot90,
+            1.0/self.scale)
+        return {'FINISHED'}
+ 
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
 
-'''def menu_func_import(self, context):
+def menu_func_import(self, context):
     self.layout.operator(ImportMQO.bl_idname, text="Metasequoia (.mqo)")
-'''
+
 
 def menu_func_export(self, context):
     self.layout.operator(ExportMQO.bl_idname, text="Metasequoia (.mqo)")
@@ -139,14 +177,14 @@ def menu_func_export(self, context):
 def register():
     bpy.utils.register_module(__name__)
 
-    #bpy.types.INFO_MT_file_import.append(menu_func_import)
+    bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 
 def unregister():
     bpy.utils.unregister_module(__name__)
 
-    #bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
 
 if __name__ == "__main__":

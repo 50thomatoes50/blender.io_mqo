@@ -182,7 +182,7 @@ def mat_extract(mat, tmp, index):
     
     
 def mat_fw(fw, tmp):
-    fw("Material  %d{\n" % (len(tmp)))
+    fw("Material  %d {\n" % (len(tmp)))
     for mat in tmp:
         fw("%s" % (mat))
     fw("}\n")
