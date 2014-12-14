@@ -138,7 +138,7 @@ def exp_obj(fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_ma
             if (uv_exp):
                 if len(f.vertices) == 3:
                     if uv_cor:
-                        fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], 1-data.uv1[1], data.uv3[0], 1-data.uv3[1], data.uv2[0], 1-data.uv2[1]))
+                        fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], 1-data.uv1[1], data.uv2[0], 1-data.uv2[1], data.uv3[0], 1-data.uv3[1]))
                     else:
                         fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], data.uv1[1], data.uv2[0], data.uv2[1], data.uv3[0], data.uv3[1]))
                 if len(f.vertices) == 4:
