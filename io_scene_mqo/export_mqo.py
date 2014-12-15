@@ -39,6 +39,7 @@ import time
 import pprint
 import bpy
 import mathutils
+import math
 import bpy_extras.io_utils
 
 
@@ -96,9 +97,14 @@ def exp_obj(fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_ma
         
         
     fw.append("\tvertex %i {\n"% (len(me.vertices)))
+    e = mathutils.Euler();
+    e.rotate_axis('X', math.radians(-90))
+    m = e.to_matrix()
     for v in me.vertices:
         if rot90:
-            fw.append("\t\t%.5f %.5f %.5f\n" % (v.co[0]*scale, v.co[2]*scale, v.co[1]*scale))
+            # rotate -90 degrees about X axis
+            vv = m*v.co
+            fw.append("\t\t%.5f %.5f %.5f\n" % (vv[0]*scale, vv[1]*scale, vv[2]*scale))
         else:
             fw.append("\t\t%.5f %.5f %.5f\n" % (v.co[0]*scale, v.co[1]*scale, v.co[2]*scale))
     fw.append("\t}\n")
@@ -136,16 +142,29 @@ def exp_obj(fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_ma
         try:
             data = me.tessface_uv_textures.active.data[f.index]
             if (uv_exp):
-                if len(f.vertices) == 3:
-                    if uv_cor:
-                        fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], 1-data.uv1[1], data.uv2[0], 1-data.uv2[1], data.uv3[0], 1-data.uv3[1]))
-                    else:
-                        fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], data.uv1[1], data.uv2[0], data.uv2[1], data.uv3[0], data.uv3[1]))
-                if len(f.vertices) == 4:
-                    if uv_cor:
-                        fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], 1-data.uv1[1], data.uv2[0], 1-data.uv2[1], data.uv3[0], 1-data.uv3[1], data.uv4[0], 1-data.uv4[1]))
-                    else:
-                        fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], data.uv1[1], data.uv2[0], data.uv2[1], data.uv3[0], data.uv3[1], data.uv4[0], data.uv4[1]))   
+                if not invert:
+                    if len(f.vertices) == 3:
+                        if uv_cor:
+                            fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], 1-data.uv1[1], data.uv2[0], 1-data.uv2[1], data.uv3[0], 1-data.uv3[1]))
+                        else:
+                            fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], data.uv1[1], data.uv2[0], data.uv2[1], data.uv3[0], data.uv3[1]))
+                    if len(f.vertices) == 4:
+                        if uv_cor:
+                            fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], 1-data.uv1[1], data.uv2[0], 1-data.uv2[1], data.uv3[0], 1-data.uv3[1], data.uv4[0], 1-data.uv4[1]))
+                        else:
+                            fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], data.uv1[1], data.uv2[0], data.uv2[1], data.uv3[0], data.uv3[1], data.uv4[0], data.uv4[1]))
+                else:
+                    if len(f.vertices) == 3:
+                        if uv_cor:
+                            fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], 1-data.uv1[1], data.uv3[0], 1-data.uv3[1], data.uv2[0], 1-data.uv2[1]))
+                        else:
+                            fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], data.uv1[1], data.uv3[0], data.uv3[1], data.uv2[0], data.uv2[1]))
+                    if len(f.vertices) == 4:
+                        if uv_cor:
+                            fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], 1-data.uv1[1], data.uv4[0], 1-data.uv4[1], data.uv3[0], 1-data.uv3[1], data.uv2[0], 1-data.uv2[1]))
+                        else:
+                            fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], data.uv1[1], data.uv4[0], data.uv4[1], data.uv3[0], data.uv3[1], data.uv2[0], data.uv2[1]))
+                    
         except AttributeError:
             pass
         

@@ -81,7 +81,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
     invert = bpy.props.BoolProperty(
         name = "Correction of inverted faces",
         description="Correction of inverted faces",
-        default = False)
+        default = True)
     
     edge = bpy.props.BoolProperty(
         name = "Export lost edge",
@@ -110,7 +110,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
  
     scale = bpy.props.FloatProperty(
         name = "Scale", 
-        description="Scale mesh", 
+        description="Scale mesh. Value < 1 means bigger, value > 1 means smaller", 
         default = 1, min = 0.001, max = 1000.0)
  
     def execute(self, context):
@@ -167,11 +167,11 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
         return {'RUNNING_MODAL'}
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportMQO.bl_idname, text="Metasequoia (.mqo)")
+    self.layout.operator(ImportMQO.bl_idname, text="50Thom Metasequoia (.mqo)")
 
 
 def menu_func_export(self, context):
-    self.layout.operator(ExportMQO.bl_idname, text="Metasequoia (.mqo)")
+    self.layout.operator(ExportMQO.bl_idname, text="50Thom Metasequoia (.mqo)")
 
 
 def register():
