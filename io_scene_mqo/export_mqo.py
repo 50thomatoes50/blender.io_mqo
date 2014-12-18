@@ -48,35 +48,34 @@ def export_mqo(filepath, objects, rot90, invert, edge, uv_exp, uv_cor, mat_exp, 
         # Exit edit mode before exporting, so current object states are exported properly.
     #if bpy.ops.object.mode_set.poll():
     #    bpy.ops.object.mode_set(mode='OBJECT')
-        
-    name = os.path.basename(filepath)
-    realpath = os.path.realpath(os.path.expanduser(filepath))
-    fp = open(realpath, 'w')
-    fw = fp.write
-    print('Exporting %s' % realpath)
+
+    if objects == None:
+        print("No MESH objects to export.")
+        return
+    with open(filepath, 'w') as fp:
+        fw = fp.write
+        print('Exporting %s' % filepath)
      
-    fw("Metasequoia Document\nFormat Text Ver 1.0\n\nScene {\n    pos 0.0000 0.0000 1500.0000\n    lookat 0.0000 0.0000 0.0000\n    head -0.5236\n    pich 0.5236\n    bank 0.0000\n    ortho 0\n    zoom2 5.0000\n    amb 0.250 0.250 0.250\n    dirlights 1 {\n        light {\n            dir 0.408 0.408 0.816\n            color 1.000 1.000 1.000\n        }\n    }\n}\n")
+        fw("Metasequoia Document\nFormat Text Ver 1.0\n\nScene {\n    pos 0.0000 0.0000 1500.0000\n    lookat 0.0000 0.0000 0.0000\n    head -0.5236\n    pich 0.5236\n    bank 0.0000\n    ortho 0\n    zoom2 5.0000\n    amb 0.250 0.250 0.250\n    dirlights 1 {\n        light {\n            dir 0.408 0.408 0.816\n            color 1.000 1.000 1.000\n        }\n    }\n}\n")
       
-    inte_mat = 0
-    tmp_mat = []
-    obj_tmp = []
+        inte_mat = 0
+        tmp_mat = []
+        obj_tmp = []
     
-    for ob in objects:
-        if not ob or ob.type != 'MESH':
-            print('Cannot export: active object %s is not a mesh.' % ob)
-        else:
-            
-            inte_mat, obj_tmp = exp_obj(obj_tmp, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_mat, tmp_mat, mod_exp)
+        for ob in objects:
+            if not ob or ob.type != 'MESH':
+                print('Cannot export: active object %s is not a mesh.' % ob)
+            else:           
+                inte_mat, obj_tmp = exp_obj(obj_tmp, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_mat, tmp_mat, mod_exp)
     
-    if mat_exp:        
-        mat_fw(fw, tmp_mat)
+        if mat_exp:        
+            mat_fw(fw, tmp_mat)
     
-    for data in obj_tmp:
-        fw(data)
+        for data in obj_tmp:
+            fw(data)
     
-    fw("\nEof\n")
-    print('%s successfully exported' % realpath)
-    fp.close()
+        fw("\nEof\n")
+        print('%s successfully exported' % filepath)
     return
     
 def exp_obj(fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_mat, tmp_mat, mod_exp):
@@ -85,11 +84,11 @@ def exp_obj(fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_ma
     if mod_exp:
         mod = modif(ob.modifiers)
     #fw("Object \"%s\" {\n\tdepth 0\n\tfolding 0\n\tscale %.6f %.6f %.6f\n\trotation %.6f %.6f %.6f\n\ttranslation %.6f %.6f %.6f\n\tvisible 15\n\tlocking 0\n\tshading 1\n\tfacet 59.5\n\tcolor 0.898 0.498 0.698\n\tcolor_type 0\n" % (me.name, scale[0], scale[1], scale[2], 180*rotat.x/pi, 180*rotat.y/pi, 180*rotat.z/pi, loca[0], loca[1], loca[2]))
-    fw.append("Object \"%s\" {\n\tdepth 0\n\tfolding 0\n\tscale 1.0 1.0 1.0\n\trotation 1.0 1.0 1.0\n\ttranslation 1.0 1.0 1.0\n\tvisible 15\n\tlocking 0\n\tshading 1\n\tfacet 59.5\n\tcolor 0.898 0.498 0.698\n\tcolor_type 0\n" % (me.name))
+    fw.append("Object \"%s\" {\n\tdepth 0\n\tfolding 0\n\tscale 1.0 1.0 1.0\n\trotation 1.0 1.0 1.0\n\ttranslation 1.0 1.0 1.0\n\tvisible 15\n\tlocking 0\n\tshading 1\n\tfacet 59.5\n\tcolor 0.898 0.498 0.698\n\tcolor_type 0\n" % (ob.name))
     for mod_fw in mod:
         fw.append(mod_fw)
         
-    print("Exporting obj=\"%s\" inte_mat=%i" %(me.name, inte_mat))
+    print("Exporting obj=\"%s\" inte_mat=%i" %(ob.name, inte_mat))
     inte_mat_obj = inte_mat
     if mat_exp:
         for mat in me.materials:

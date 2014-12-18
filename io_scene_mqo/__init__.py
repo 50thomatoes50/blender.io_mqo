@@ -44,7 +44,7 @@ if "bpy" in locals():
     if "export_mqo" in locals():
         imp.reload(export_mqo)
 
-
+import os
 import bpy
 from bpy.props import (BoolProperty,
                        FloatProperty,
@@ -67,11 +67,6 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
     # From ExportHelper. Filter filenames.
     filename_ext = ".mqo"
     filter_glob = StringProperty(default="*.mqo", options={'HIDDEN'})
- 
-    filepath = bpy.props.StringProperty(
-        name="File Path", 
-        description="File path used for exporting the mqo file", 
-        maxlen= 1024, default= "")
  
     rot90 = bpy.props.BoolProperty(
         name = "Up axis correction",
@@ -112,18 +107,28 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         name = "Scale", 
         description="Scale mesh. Value < 1 means bigger, value > 1 means smaller", 
         default = 1, min = 0.001, max = 1000.0)
- 
+    
     def execute(self, context):
-        print("Load", self.properties.filepath)
+        print("Saving", self.properties.filepath)
         from . import export_mqo
+        meshobjects = [ob for ob in context.scene.objects if ob.type == 'MESH']
         export_mqo.export_mqo(
             self.properties.filepath, 
-            context.scene.objects, 
+            meshobjects, 
             self.rot90, self.invert, self.edge, self.uv_exp, self.uv_cor, self.mat_exp, self.mod_exp,
             1.0/self.scale)
         return {'FINISHED'}
  
     def invoke(self, context, event):
+        meshobjects = [ob for ob in context.scene.objects if ob.type == 'MESH']
+        if not meshobjects:
+            print("No MESH objects to export.")
+            return{'CANCELLED'}
+        pth, fn = os.path.split(bpy.data.filepath)
+        nm, xtn = os.path.splitext(fn)
+        if nm =="":
+            nm = meshobjects[0].name
+        self.properties.filepath = nm
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
