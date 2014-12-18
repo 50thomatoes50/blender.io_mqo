@@ -67,6 +67,11 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
     # From ExportHelper. Filter filenames.
     filename_ext = ".mqo"
     filter_glob = StringProperty(default="*.mqo", options={'HIDDEN'})
+
+    scale = bpy.props.FloatProperty(
+        name = "Scale", 
+        description="Scale mesh. Value < 1 means bigger, value > 1 means smaller", 
+        default = 1, min = 0.001, max = 1000.0)
  
     rot90 = bpy.props.BoolProperty(
         name = "Up axis correction",
@@ -102,17 +107,17 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         name = "Export Modifier",
         description="Export modifier like mirror or/and subdivision surface",
         default = True)
- 
-    scale = bpy.props.FloatProperty(
-        name = "Scale", 
-        description="Scale mesh. Value < 1 means bigger, value > 1 means smaller", 
-        default = 1, min = 0.001, max = 1000.0)
     
     def execute(self, context):
-        print("Saving", self.properties.filepath)
+        msg = ".mqo export: Executing"
+        self.report({'INFO'}, msg)
+        print(msg)
+        msg = ".mqo export: Scale is 1/%.3f = %.3f"%(self.scale, 1.0/self.scale)
+        print(msg)
+        self.report({'INFO'}, msg)
         from . import export_mqo
         meshobjects = [ob for ob in context.scene.objects if ob.type == 'MESH']
-        export_mqo.export_mqo(
+        export_mqo.export_mqo(self,
             self.properties.filepath, 
             meshobjects, 
             self.rot90, self.invert, self.edge, self.uv_exp, self.uv_cor, self.mat_exp, self.mod_exp,
@@ -122,7 +127,9 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
     def invoke(self, context, event):
         meshobjects = [ob for ob in context.scene.objects if ob.type == 'MESH']
         if not meshobjects:
-            print("No MESH objects to export.")
+            msg = ".mqo export: Cancelled - No MESH objects to export."
+            self.report({'ERROR'}, msg)
+            print(msg,"\n")
             return{'CANCELLED'}
         pth, fn = os.path.split(bpy.data.filepath)
         nm, xtn = os.path.splitext(fn)
