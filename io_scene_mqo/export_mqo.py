@@ -187,22 +187,22 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
             col = vcol[i];
             col = col.color1[:], col.color2[:], col.color3[:], col.color4[:]
             if len(f.vertices) == 3:
-                argb0 = (int(col[0][0]*255)) | (int(col[0][1]*255)<<8) | (int(col[0][2]*255)<<16) | (255<<24)
-                argb1 = (int(col[1][0]*255)) | (int(col[1][1]*255)<<8) | (int(col[1][2]*255)<<16) | (255<<24)
-                argb2 = (int(col[2][0]*255)) | (int(col[2][1]*255)<<8) | (int(col[2][2]*255)<<16) | (255<<24)
+                rgba0 = (int(col[0][0]*255)) | (int(col[0][1]*255)<<8) | (int(col[0][2]*255)<<16) | (255<<24)
+                rgba1 = (int(col[1][0]*255)) | (int(col[1][1]*255)<<8) | (int(col[1][2]*255)<<16) | (255<<24)
+                rgba2 = (int(col[2][0]*255)) | (int(col[2][1]*255)<<8) | (int(col[2][2]*255)<<16) | (255<<24)
                 if invert:
-                    fw.append(" COL(%d %d %d)" % (argb0, argb2, argb1))
+                    fw.append(" COL(%d %d %d)" % (rgba0, rgba2, rgba1))
                 else:
-                    fw.append(" COL(%d %d %d)" % (argb0, argb1, argb2))
+                    fw.append(" COL(%d %d %d)" % (rgba0, rgba1, rgba2))
             if len(f.vertices) == 4:
-                argb0 = (int(col[0][0]*255)) | (int(col[0][1]*255)<<8) | (int(col[0][2]*255)<<16) | (255<<24)
-                argb1 = (int(col[1][0]*255)) | (int(col[1][1]*255)<<8) | (int(col[1][2]*255)<<16) | (255<<24)
-                argb2 = (int(col[2][0]*255)) | (int(col[2][1]*255)<<8) | (int(col[2][2]*255)<<16) | (255<<24)
-                argb3 = (int(col[3][0]*255)) | (int(col[3][1]*255)<<8) | (int(col[3][2]*255)<<16) | (255<<24)
+                rgba0 = (int(col[0][0]*255)) | (int(col[0][1]*255)<<8) | (int(col[0][2]*255)<<16) | (255<<24)
+                rgba1 = (int(col[1][0]*255)) | (int(col[1][1]*255)<<8) | (int(col[1][2]*255)<<16) | (255<<24)
+                rgba2 = (int(col[2][0]*255)) | (int(col[2][1]*255)<<8) | (int(col[2][2]*255)<<16) | (255<<24)
+                rgba3 = (int(col[3][0]*255)) | (int(col[3][1]*255)<<8) | (int(col[3][2]*255)<<16) | (255<<24)
                 if invert:
-                    fw.append(" COL(%d %d %d %d)" % (argb0, argb3, argb2, argb1))
+                    fw.append(" COL(%d %d %d %d)" % (rgba0, rgba3, rgba2, rgba1))
                 else:
-                    fw.append(" COL(%d %d %d %d)" % (argb0, argb1, argb2, argb3))
+                    fw.append(" COL(%d %d %d %d)" % (rgba0, rgba1, rgba2, rgba3))
         
         fw.append("\n")
     fw.append("\t}\n")
