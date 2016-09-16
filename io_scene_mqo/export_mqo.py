@@ -1,4 +1,4 @@
-﻿# ##### BEGIN GPL LICENSE BLOCK #####
+# ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -43,7 +43,7 @@ import math
 import bpy_extras.io_utils
 
 
-def export_mqo(op, filepath, objects, rot90, invert, edge, uv_exp, uv_cor, mat_exp, mod_exp, scale):
+def export_mqo(op, filepath, objects, rot90, invert, edge, uv_exp, uv_cor, mat_exp, mod_exp, vcol_exp, scale):
     
         # Exit edit mode before exporting, so current object states are exported properly.
     #if bpy.ops.object.mode_set.poll():
@@ -67,7 +67,7 @@ def export_mqo(op, filepath, objects, rot90, invert, edge, uv_exp, uv_cor, mat_e
         obj_tmp = []
     
         for ob in objects:        
-            inte_mat, obj_tmp = exp_obj(op, obj_tmp, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_mat, tmp_mat, mod_exp)
+            inte_mat, obj_tmp = exp_obj(op, obj_tmp, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_mat, tmp_mat, mod_exp, vcol_exp)
     
         if mat_exp:        
             mat_fw(fw, tmp_mat)
@@ -81,7 +81,7 @@ def export_mqo(op, filepath, objects, rot90, invert, edge, uv_exp, uv_cor, mat_e
         op.report({'INFO'}, msg)
     return
     
-def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_mat, tmp_mat, mod_exp):
+def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_mat, tmp_mat, mod_exp, vcol_exp):
     me = ob.data
     pi = 3.141594
     if mod_exp:
@@ -98,7 +98,18 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
     if mat_exp:
         for mat in me.materials:
             inte_mat = mat_extract(op, mat, tmp_mat, inte_mat)
-        
+            
+    me.update(False, True)
+    has_vcol = False
+    if bool(me.tessface_vertex_colors):
+        vcol = me.tessface_vertex_colors.active
+        if vcol:
+            vcol = vcol.data
+            has_vcol = True
+    if vcol_exp and has_vcol:
+        msg = ".mqo export: exporting vertex colors"
+        print(msg)
+        op.report({'INFO'}, msg)
         
     fw.append("\tvertex %i {\n"% (len(me.vertices)))
     e = mathutils.Euler();
@@ -128,7 +139,7 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
         fw.append("\tface %i {\n" % (len(faces)))
     
     me.update(False, True)     
-    for f in faces:
+    for i, f in enumerate(faces):
         vs = f.vertices
         if len(f.vertices) == 3:
             if invert:
@@ -172,6 +183,27 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
         except AttributeError:
             pass
         
+        if vcol_exp and has_vcol:
+            col = vcol[i];
+            col = col.color1[:], col.color2[:], col.color3[:], col.color4[:]
+            if len(f.vertices) == 3:
+                argb0 = (int(col[0][0]*255)) | (int(col[0][1]*255)<<8) | (int(col[0][2]*255)<<16) | (255<<24)
+                argb1 = (int(col[1][0]*255)) | (int(col[1][1]*255)<<8) | (int(col[1][2]*255)<<16) | (255<<24)
+                argb2 = (int(col[2][0]*255)) | (int(col[2][1]*255)<<8) | (int(col[2][2]*255)<<16) | (255<<24)
+                if invert:
+                    fw.append(" COL(%d %d %d)" % (argb0, argb2, argb1))
+                else:
+                    fw.append(" COL(%d %d %d)" % (argb0, argb1, argb2))
+            if len(f.vertices) == 4:
+                argb0 = (int(col[0][0]*255)) | (int(col[0][1]*255)<<8) | (int(col[0][2]*255)<<16) | (255<<24)
+                argb1 = (int(col[1][0]*255)) | (int(col[1][1]*255)<<8) | (int(col[1][2]*255)<<16) | (255<<24)
+                argb2 = (int(col[2][0]*255)) | (int(col[2][1]*255)<<8) | (int(col[2][2]*255)<<16) | (255<<24)
+                argb3 = (int(col[3][0]*255)) | (int(col[3][1]*255)<<8) | (int(col[3][2]*255)<<16) | (255<<24)
+                if invert:
+                    fw.append(" COL(%d %d %d %d)" % (argb0, argb3, argb2, argb1))
+                else:
+                    fw.append(" COL(%d %d %d %d)" % (argb0, argb1, argb2, argb3))
+        
         fw.append("\n")
     fw.append("\t}\n")
 
@@ -186,7 +218,7 @@ def mat_extract(op, mat, tmp, index):
     msg = ".mqo export: added mat %s / index #%i" % (mat.name,index)
     print(msg)
     op.report({'INFO'}, msg)
-    l = "\t\"%s\" col(%.3f %.3f %.3f %.3f) dif(%.3f) amb(%.3f) emi(%.3f) spc(%.3f) power(5)" % (mat.name, mat.diffuse_color[0], mat.diffuse_color[1], mat.diffuse_color[2], mat.alpha, mat.diffuse_intensity, mat.ambient, mat.emit, mat.specular_intensity)
+    l = "\t\"%s\" col(%.3f %.3f %.3f %.3f) dif(%.3f) amb(%.3f) emi(%.3f) spc(%.3f) power(5) vcol(%d)" % (mat.name, mat.diffuse_color[0], mat.diffuse_color[1], mat.diffuse_color[2], mat.alpha, mat.diffuse_intensity, mat.ambient, mat.emit, mat.specular_intensity, mat.use_vertex_color_paint)
     for tex in mat.texture_slots.values():
         if tex != None:
             if tex.use and tex.texture.type == 'IMAGE' and tex.texture.image != None:
