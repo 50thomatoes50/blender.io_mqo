@@ -198,11 +198,11 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
         return {'FINISHED'}
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportMQO.bl_idname, text="50Thom Metasequoia (.mqo)")
+    self.layout.operator(ImportMQO.bl_idname, text="Metasequoia (.mqo)")
 
 
 def menu_func_export(self, context):
-    self.layout.operator(ExportMQO.bl_idname, text="50Thom Metasequoia (.mqo)")
+    self.layout.operator(ExportMQO.bl_idname, text="Metasequoia (.mqo)")
 
 
 def register():
