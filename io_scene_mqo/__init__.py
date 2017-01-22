@@ -1,4 +1,4 @@
-﻿# ##### BEGIN GPL LICENSE BLOCK #####
+# ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -44,7 +44,7 @@ if "bpy" in locals():
     if "export_mqo" in locals():
         imp.reload(export_mqo)
 
-
+import os
 import bpy
 from bpy.props import (BoolProperty,
                        FloatProperty,
@@ -67,11 +67,11 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
     # From ExportHelper. Filter filenames.
     filename_ext = ".mqo"
     filter_glob = StringProperty(default="*.mqo", options={'HIDDEN'})
- 
-    filepath = bpy.props.StringProperty(
-        name="File Path", 
-        description="File path used for exporting the mqo file", 
-        maxlen= 1024, default= "")
+
+    scale = bpy.props.FloatProperty(
+        name = "Scale", 
+        description="Scale mesh. Value > 1 means bigger, value < 1 means smaller", 
+        default = 1, min = 0.001, max = 1000.0)
  
     rot90 = bpy.props.BoolProperty(
         name = "Up axis correction",
@@ -81,7 +81,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
     invert = bpy.props.BoolProperty(
         name = "Correction of inverted faces",
         description="Correction of inverted faces",
-        default = False)
+        default = True)
     
     edge = bpy.props.BoolProperty(
         name = "Export lost edge",
@@ -107,23 +107,46 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         name = "Export Modifier",
         description="Export modifier like mirror or/and subdivision surface",
         default = True)
- 
-    scale = bpy.props.FloatProperty(
-        name = "Scale", 
-        description="Scale mesh", 
-        default = 1, min = 0.001, max = 1000.0)
- 
+        
+    vcol_exp = bpy.props.BoolProperty(
+        name = "Export Vertex Colors",
+        description="Export vertex colors",
+        default = True)
+    
     def execute(self, context):
-        print("Load", self.properties.filepath)
+        msg = ".mqo export: Executing"
+        self.report({'INFO'}, msg)
+        print(msg)
+        if self.scale < 1:
+            s = "%.0f times smaller" % 1.0/self.scale
+        elif self.scale > 1:
+            s = "%.0f times bigger" % self.scale
+        else:
+            s = "same size"            
+        msg = ".mqo export: Objects will be %s"%(s)
+        print(msg)
+        self.report({'INFO'}, msg)
         from . import export_mqo
-        export_mqo.export_mqo(
+        meshobjects = [ob for ob in context.scene.objects if ob.type == 'MESH']
+        export_mqo.export_mqo(self,
             self.properties.filepath, 
-            context.scene.objects, 
-            self.rot90, self.invert, self.edge, self.uv_exp, self.uv_cor, self.mat_exp, self.mod_exp,
-            1.0/self.scale)
+            meshobjects, 
+            self.rot90, self.invert, self.edge, self.uv_exp, self.uv_cor, self.mat_exp, self.mod_exp, self.vcol_exp,
+            self.scale)
         return {'FINISHED'}
  
     def invoke(self, context, event):
+        meshobjects = [ob for ob in context.scene.objects if ob.type == 'MESH']
+        if not meshobjects:
+            msg = ".mqo export: Cancelled - No MESH objects to export."
+            self.report({'ERROR'}, msg)
+            print(msg,"\n")
+            return{'CANCELLED'}
+        pth, fn = os.path.split(bpy.data.filepath)
+        nm, xtn = os.path.splitext(fn)
+        if nm =="":
+            nm = meshobjects[0].name
+        self.properties.filepath = nm
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
@@ -137,34 +160,42 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
     # From ExportHelper. Filter filenames.
     filename_ext = ".mqo"
     filter_glob = StringProperty(default="*.mqo", options={'HIDDEN'})
- 
-    filepath = bpy.props.StringProperty(
-        name="File Path", 
-        description="File path used for exporting the mqo file", 
-        maxlen= 1024, default= "")
+
+    scale = bpy.props.FloatProperty(
+        name = "Scale", 
+        description="Scale mesh. Value > 1 means bigger, value < 1 means smaller", 
+        default = 1, min = 0.001, max = 1000.0)
  
     rot90 = bpy.props.BoolProperty(
         name = "Up axis correction",
         description="Blender up axis is Z but metasequoia up axis is Y\nExporter will invert value to be in the correcte direction",
         default = True)
- 
-    scale = bpy.props.FloatProperty(
-        name = "Scale", 
-        description="Scale mesh", 
-        default = 1, min = 0.001, max = 1000.0)
+
+    debug = bpy.props.BoolProperty(
+        name = "Show debug text",
+        description="Print debug text to console",
+        default = False)
  
     def execute(self, context):
-        print("Load", self.properties.filepath)
+        msg = ".mqo import: Opening %s"% self.properties.filepath
+        print(msg)
+        self.report({'INFO'}, msg)
+        if self.scale < 1:
+            s = "%.0f times smaller" % (1.0/self.scale)
+        elif self.scale > 1:
+            s = "%.0f times bigger" % self.scale
+        else:
+            s = "same size"            
+        msg = ".mqo import: Objects will be %s"%(s)
+        print(msg)
+        self.report({'INFO'}, msg)        
         from . import import_mqo
-        import_mqo.import_mqo(
+        import_mqo.import_mqo(self,
             self.properties.filepath, 
             self.rot90,
-            1.0/self.scale)
+            self.scale,
+            self.debug)
         return {'FINISHED'}
- 
-    def invoke(self, context, event):
-        context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
 
 def menu_func_import(self, context):
     self.layout.operator(ImportMQO.bl_idname, text="Metasequoia (.mqo)")
