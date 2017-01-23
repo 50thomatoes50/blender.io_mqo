@@ -60,11 +60,15 @@ def import_mqo(op, filepath, rot90, scale, debug):
         obj = False
         mat = False
         mat_nb = 0
+        mat_list = []
         v = False
         v_nb = 0
         obj_name = ""
         f = False
         f_nb = 0
+        f_index = 0
+        f_mat = {}
+        f_uv = {}
         
         for line in fp:
             words = line.split()
@@ -84,6 +88,16 @@ def import_mqo(op, filepath, rot90, scale, debug):
                         me = bpy.data.meshes.new(obj_name)
                         me.from_pydata(verts, [], faces)
                         me.update()
+                        for mat_tmp in mat_list:
+                            me.materials.append(mat_tmp)
+                            
+                        if len(f_mat):
+                            for fmk in f_mat.keys():
+                                me.polygons[fmk].material_index = f_mat[fmk]
+                                
+                        #if len(f_uv):
+                            
+                            
                         scn = bpy.context.scene
                         ob = bpy.data.objects.new(obj_name, me)
                         scn.objects.link(ob)
@@ -94,6 +108,9 @@ def import_mqo(op, filepath, rot90, scale, debug):
                         obj_name = ""
                         f = False
                         f_nb = 0
+                        f_index = 0
+                        f_mat = {}
+                        f_uv = {}
                         verts = []
                         faces = []
                         texverts = []
@@ -133,18 +150,53 @@ def import_mqo(op, filepath, rot90, scale, debug):
                 f_nb = int(words[1])
             elif obj and f and f_nb != 0:           ##get face vertex
                 dprint('found a face', debug)
-                if int(words[0]) == 2:
+                f_vert_nb = int(words[0])
+                if f_vert_nb == 2:
                     edges.append((int(words[1].strip('V(')), int(words[2].strip(')'))))
-                elif int(words[0]) == 3:
+                elif f_vert_nb == 3:
                     faces.append((int(words[1].strip('V(')), int(words[2]), int(words[3].strip(')'))))
-                elif int(words[0]) == 4:
+                elif f_vert_nb == 4:
                     faces.append((int(words[1].strip('V(')), int(words[2]), int(words[3]), int(words[4].strip(')'))))
                 else:
-                    dprint('error : face with %i vertex' % words[0], debug)
+                    dprint('error : face with %i vertex' % (f_vert_nb), debug)
+                    
+                if "M(" in line:
+                    for w in words:
+                        if w.startswith("M("):
+                            f_mat[f_index] = int(w.strip("M()"))
+                
+                if "UV(" in line:
+                    for i in range(len(words)):
+                        if words[i].startswith("UV("):
+                            if f_vert_nb == 2:
+                                f_uv[f_index] = [ float( words[i].strip("UV(")), float(words[i+1]), float(words[i+2]), float( words[i+3].strip(")"))  ]
+                            elif f_vert_nb == 3:
+                                f_uv[f_index] = [ float( words[i].strip("UV(")), float(words[i+1]), float(words[i+2]), float(words[i+3]), float(words[i+4]), float( words[i+5].strip(")"))  ]
+                            elif f_vert_nb == 4:
+                                f_uv[f_index] = [ float( words[i].strip("UV(")), float(words[i+1]), float(words[i+2]), float(words[i+3]), float(words[i+4]), float(words[i+5]), float(words[i+6]), float( words[i+7].strip(")"))  ]
+                            else:
+                                dprint('error : face UV with %i vertex' %(f_vert_nb), debug)
+                    
+                f_index +=1
                 f_nb = f_nb -1
                 if f_nb ==0:
                     #f= False
                     dprint('end of face?', debug)
+            elif mat and mat_nb > 0 :
+                mat_tmp = bpy.data.materials.new(words[0].strip('"'))
+                mat_tmp.diffuse_color = (float(words[2].strip('col(')), float(words[3]), float(words[4]))
+                """mat_tmp.diffuse_intensity = self.diffuse
+                mat_tmp.ambient = self.ambient
+                mat_tmp.specular_intensity = self.specular"""
+                if float(words[5].strip(')')) < 1.0:
+                    mat_tmp.use_transparency = True
+                    mat_tmpd = float(words[5].strip(')'))
+                mat_list.append(mat_tmp)
+                
+                mat_nb -=1
+                if mat_nb ==0:
+                    #f= False
+                    dprint('end of mat?', debug)
             else:
                 dprint('don\'t know what is it', debug)
                 pass            

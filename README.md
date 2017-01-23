@@ -19,7 +19,7 @@ feature for importer
 - [X] Import tri / face
 - [X] Import several meshes
 - [ ] UV map
-- [ ] Export materials
+- [X] Import materials
 - [ ] Modifier (Mirror / subdivision surface)
 
 ___
