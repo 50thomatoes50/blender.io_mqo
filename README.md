@@ -18,8 +18,10 @@ feature for importer
 - [?] Import edges
 - [X] Import tri / face
 - [X] Import several meshes
-- [ ] UV map
+- [X] UV map
 - [X] Import materials
+  - [X] Import other properties
+  - [X] Import texture
 - [ ] Modifier (Mirror / subdivision surface)
 
 ___
