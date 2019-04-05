@@ -30,7 +30,7 @@ NO WIKI FOR THE MOMENT
 http://wiki.blender.org/index.php/Scripts/Manual/Export/MQO
 
 
-base source from : 
+base source from :
 http://wiki.blender.org/index.php/Dev:2.5/Py/Scripts/Cookbook/Code_snippets/Multi-File_packages#Simple_obj_export
 """
 
@@ -44,7 +44,7 @@ import bpy_extras.io_utils
 
 
 def export_mqo(op, filepath, objects, rot90, invert, edge, uv_exp, uv_cor, mat_exp, mod_exp, vcol_exp, scale):
-    
+
         # Exit edit mode before exporting, so current object states are exported properly.
     #if bpy.ops.object.mode_set.poll():
     #    bpy.ops.object.mode_set(mode='OBJECT')
@@ -59,28 +59,28 @@ def export_mqo(op, filepath, objects, rot90, invert, edge, uv_exp, uv_cor, mat_e
         msg = ".mqo export: Writing %s" % filepath
         print(msg)
         op.report({'INFO'}, msg)
-     
+
         fw("Metasequoia Document\nFormat Text Ver 1.0\n\nScene {\n    pos 0.0000 0.0000 1500.0000\n    lookat 0.0000 0.0000 0.0000\n    head -0.5236\n    pich 0.5236\n    bank 0.0000\n    ortho 0\n    zoom2 5.0000\n    amb 0.250 0.250 0.250\n    dirlights 1 {\n        light {\n            dir 0.408 0.408 0.816\n            color 1.000 1.000 1.000\n        }\n    }\n}\n")
-      
+
         inte_mat = 0
         tmp_mat = []
         obj_tmp = []
-    
-        for ob in objects:        
+
+        for ob in objects:
             inte_mat, obj_tmp = exp_obj(op, obj_tmp, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_mat, tmp_mat, mod_exp, vcol_exp)
-    
-        if mat_exp:        
+
+        if mat_exp:
             mat_fw(fw, tmp_mat)
-    
+
         for data in obj_tmp:
             fw(data)
-    
+
         fw("\nEof\n")
         msg = ".mqo export: Export finished. Created %s" % filepath
         print(msg,"\n")
         op.report({'INFO'}, msg)
     return
-    
+
 def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_mat, tmp_mat, mod_exp, vcol_exp):
     me = ob.data
     pi = 3.141594
@@ -90,7 +90,7 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
     fw.append("Object \"%s\" {\n\tdepth 0\n\tfolding 0\n\tscale 1.0 1.0 1.0\n\trotation 1.0 1.0 1.0\n\ttranslation 1.0 1.0 1.0\n\tvisible 15\n\tlocking 0\n\tshading 1\n\tfacet 59.5\n\tcolor 0.898 0.498 0.698\n\tcolor_type 0\n" % (ob.name))
     for mod_fw in mod:
         fw.append(mod_fw)
-    
+
     msg = ".mqo export: Exporting obj=\"%s\" inte_mat=%i" %(ob.name, inte_mat)
     print(msg)
     op.report({'INFO'}, msg)
@@ -98,7 +98,7 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
     if mat_exp:
         for mat in me.materials:
             inte_mat = mat_extract(op, mat, tmp_mat, inte_mat)
-            
+
     me.update(False, True)
     has_vcol = False
     if bool(me.tessface_vertex_colors):
@@ -110,7 +110,7 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
         msg = ".mqo export: exporting vertex colors"
         print(msg)
         op.report({'INFO'}, msg)
-        
+
     fw.append("\tvertex %i {\n"% (len(me.vertices)))
     e = mathutils.Euler();
     e.rotate_axis('X', math.radians(-90))
@@ -123,7 +123,7 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
         else:
             fw.append("\t\t%.5f %.5f %.5f\n" % (v.co[0]*scale, v.co[1]*scale, v.co[2]*scale))
     fw.append("\t}\n")
-    
+
     me.update(False, True)
     faces = me.tessfaces
     lostEdges = 0
@@ -137,8 +137,8 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
                 fw.append("\t\t2 V(%i %i)\n" % (e.vertices[0], e.vertices[1]))
     else:
         fw.append("\tface %i {\n" % (len(faces)))
-    
-    me.update(False, True)     
+
+    me.update(False, True)
     for i, f in enumerate(faces):
         vs = f.vertices
         if len(f.vertices) == 3:
@@ -151,9 +151,9 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
                 fw.append("\t\t4 V(%d %d %d %d)" % (vs[0], vs[3], vs[2], vs[1]))
             else:
                 fw.append("\t\t4 V(%d %d %d %d)" % (vs[0], vs[1], vs[2], vs[3]))
-                
+
         fw.append(" M(%d)" % (f.material_index+inte_mat_obj))
-        
+
         try:
             data = me.tessface_uv_textures.active.data[f.index]
             if (uv_exp):
@@ -179,10 +179,10 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
                             fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], 1-data.uv1[1], data.uv4[0], 1-data.uv4[1], data.uv3[0], 1-data.uv3[1], data.uv2[0], 1-data.uv2[1]))
                         else:
                             fw.append(" UV(%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f)" % (data.uv1[0], data.uv1[1], data.uv4[0], data.uv4[1], data.uv3[0], data.uv3[1], data.uv2[0], data.uv2[1]))
-                    
+
         except AttributeError:
             pass
-        
+
         if vcol_exp and has_vcol:
             col = vcol[i];
             col = col.color1[:], col.color2[:], col.color3[:], col.color4[:]
@@ -203,14 +203,14 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
                     fw.append(" COL(%d %d %d %d)" % (rgba0, rgba3, rgba2, rgba1))
                 else:
                     fw.append(" COL(%d %d %d %d)" % (rgba0, rgba1, rgba2, rgba3))
-        
+
         fw.append("\n")
     fw.append("\t}\n")
 
     fw.append("}\n")
     return inte_mat, fw
-    
-    
+
+
 def mat_extract(op, mat, tmp, index):
     #l = "\t\"" + mat.name + "\" " + "col(" + str(mat.diffuse_color[0]) + " " + str(mat.diffuse_color[1]) + " " + str(mat.diffuse_color[2]) + " " + str(mat.alpha) + ")" + " dif(" + str(mat.diffuse_intensity) + ")" + " amb(" + str(mat.ambient) + ")" + " emi(" + str(mat.emit) + ")" + " spc(" + str(mat.specular_intensity) + ")" + " power(5)\n"
     alpha = ''
@@ -233,17 +233,17 @@ def mat_extract(op, mat, tmp, index):
                     else:
                         diffuse = tex.texture.image.filepath
     l = l +  " tex(\"" + diffuse + "\") aplane(\"" + alpha + "\")"
-     
+
     tmp.append(l+"\n")
     return index + 1
-    
-    
+
+
 def mat_fw(fw, tmp):
     fw("Material  %d {\n" % (len(tmp)))
     for mat in tmp:
         fw("%s" % (mat))
     fw("}\n")
-    
+
 def modif(op, modifiers):
     tmp = []
     axis = 0
@@ -263,7 +263,7 @@ def modif(op, modifiers):
             if mod.use_z:
                 axis = axis + 4
         if mod.type == "SUBSURF":
-            msg = ".mqo export: exporting subsurf" 
+            msg = ".mqo export: exporting subsurf"
             print(msg)
             op.report({'INFO'}, msg)
             tmp.append("\tpatch 3\n\tpatchtri 0\n\tsegment %i\n" % mod.render_levels)

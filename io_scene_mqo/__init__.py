@@ -24,7 +24,7 @@
 
 bl_info = {
     "name": "Metasequoia format (.mqo)",
-    "author": "50thomatoes50",
+    "author": "Thomas Portassau (50thomatoes50), sapper-trle@github, jacquesmn@github",
     "blender": (2, 65, 0),
     "location": "File > Import-Export",
     "description": "Import-Export MQO, UV's, "
@@ -63,56 +63,56 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
     bl_label = "Export mqo"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
- 
+
     # From ExportHelper. Filter filenames.
     filename_ext = ".mqo"
     filter_glob = StringProperty(default="*.mqo", options={'HIDDEN'})
 
     scale = bpy.props.FloatProperty(
-        name = "Scale", 
-        description="Scale mesh. Value > 1 means bigger, value < 1 means smaller", 
+        name = "Scale",
+        description="Scale mesh. Value > 1 means bigger, value < 1 means smaller",
         default = 1, min = 0.001, max = 1000.0)
- 
+
     rot90 = bpy.props.BoolProperty(
         name = "Up axis correction",
         description="Blender up axis is Z but metasequoia up axis is Y\nExporter will invert value to be in the correcte direction",
         default = True)
-    
+
     invert = bpy.props.BoolProperty(
         name = "Correction of inverted faces",
         description="Correction of inverted faces",
         default = True)
-    
+
     edge = bpy.props.BoolProperty(
         name = "Export lost edge",
         description="Export edge with is not attached to a polygon",
         default = True)
- 
+
     uv_exp = bpy.props.BoolProperty(
         name = "Export UV",
         description="Export UV",
         default = True)
-    
+
     uv_cor = bpy.props.BoolProperty(
         name = "Convert UV",
         description="invert UV map to be in the direction has metasequoia",
         default = True)
-        
+
     mat_exp = bpy.props.BoolProperty(
         name = "Export Materials",
         description="...",
         default = True)
-    
+
     mod_exp = bpy.props.BoolProperty(
         name = "Export Modifier",
         description="Export modifier like mirror or/and subdivision surface",
         default = True)
-        
+
     vcol_exp = bpy.props.BoolProperty(
         name = "Export Vertex Colors",
         description="Export vertex colors",
         default = True)
-    
+
     def execute(self, context):
         msg = ".mqo export: Executing"
         self.report({'INFO'}, msg)
@@ -122,19 +122,19 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         elif self.scale > 1:
             s = "%.0f times bigger" % self.scale
         else:
-            s = "same size"            
+            s = "same size"
         msg = ".mqo export: Objects will be %s"%(s)
         print(msg)
         self.report({'INFO'}, msg)
         from . import export_mqo
         meshobjects = [ob for ob in context.scene.objects if ob.type == 'MESH']
         export_mqo.export_mqo(self,
-            self.properties.filepath, 
-            meshobjects, 
+            self.properties.filepath,
+            meshobjects,
             self.rot90, self.invert, self.edge, self.uv_exp, self.uv_cor, self.mat_exp, self.mod_exp, self.vcol_exp,
             self.scale)
         return {'FINISHED'}
- 
+
     def invoke(self, context, event):
         meshobjects = [ob for ob in context.scene.objects if ob.type == 'MESH']
         if not meshobjects:
@@ -156,16 +156,16 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
     bl_label = "Import mqo"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
- 
+
     # From ExportHelper. Filter filenames.
     filename_ext = ".mqo"
     filter_glob = StringProperty(default="*.mqo", options={'HIDDEN'})
 
     scale = bpy.props.FloatProperty(
-        name = "Scale", 
-        description="Scale mesh. Value > 1 means bigger, value < 1 means smaller", 
+        name = "Scale",
+        description="Scale mesh. Value > 1 means bigger, value < 1 means smaller",
         default = 1, min = 0.001, max = 1000.0)
- 
+
     rot90 = bpy.props.BoolProperty(
         name = "Up axis correction",
         description="Blender up axis is Z but metasequoia up axis is Y\nExporter will invert value to be in the correcte direction",
@@ -175,7 +175,7 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
         name = "Show debug text",
         description="Print debug text to console",
         default = False)
- 
+
     def execute(self, context):
         msg = ".mqo import: Opening %s"% self.properties.filepath
         print(msg)
@@ -185,13 +185,13 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
         elif self.scale > 1:
             s = "%.0f times bigger" % self.scale
         else:
-            s = "same size"            
+            s = "same size"
         msg = ".mqo import: Objects will be %s"%(s)
         print(msg)
-        self.report({'INFO'}, msg)        
+        self.report({'INFO'}, msg)
         from . import import_mqo
         import_mqo.import_mqo(self,
-            self.properties.filepath, 
+            self.properties.filepath,
             self.rot90,
             self.scale,
             self.debug)

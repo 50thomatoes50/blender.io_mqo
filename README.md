@@ -1,37 +1,32 @@
-blender.io_mqo : Blender importer and exporter for Metasequia files (.mqo)
+blender.io_mqo : Blender importer and exporter for Metasequoia files (.mqo)
 ==============
+![ALPHA](https://badgen.net/badge/Status/Alpha/red)
+![GNU GPL V2](https://badgen.net/github/license/50thomatoes50/blender.io_mqo)
 
-feature for exporter
---------------
-- [x] Export vertices
-- [x] Export ~~all~~ edges (~~in near future I want to~~ export only edges which are not used by a polygon)
-- [X] Export polygon
-- [X] UV map
-- [X] Export materials
-- [X] Modifier (Mirror / subdivision surface)
-- [X] Export several meshes
-- [ ] Export other thing like text (but converted in mesh) note: not sure to add this feature
+Features | Import | Export
+--- | --- | --- |
+Basic geometry (vert,edge,tri,quad) |  :heavy_check_mark: |  :heavy_check_mark:
+UV map  |  :heavy_check_mark: |  :heavy_check_mark:
+Materials  |  :heavy_check_mark: |  :heavy_check_mark:
+Simple Modifier (Mirror / subdivision surface)  |  :soon: |  :heavy_check_mark:
 
-feature for importer
+
+Todo
 --------------
-- [x] Import vertices
-- [?] Import edges
-- [X] Import tri / face
-- [X] Import several meshes
-- [X] UV map
-- [X] Import materials
-  - [X] Import other properties
-  - [X] Import texture
-- [ ] Modifier (Mirror / subdivision surface)
+- Port to bpy 2.8
+- Export other thing like text (but converted in mesh) note: not sure to add this feature
+- Importer Modifier (Mirror / subdivision surface)
+- Metasequoia 4+ featues :
+  - Use `bpy.Bmesh` to support face with 4+ vertices
+  - Bones
+
 
 ___
 # Installation method
-- Click 'Download ZIP'
-- Extract the folder (not the content of this folder) in your blender folder installation (eg: "...Blender\'%Blender_Version%'\scripts\addons\"
+- Click `Download ZIP`
+- Extract the folder `io_scene_mqo` in your blender folder installation (eg: "`...\Blender2.##\scripts\addons\`"
 - Start blender
-- Go 'File' >> 'User preferences...' >> 'Addons' >> 'Import-Export' and check the tick at 'Import-Export: Metasequoia format(.mqo)'
+- Go `File` >> `User preferences...` >> `Addons` >> `Import-Export` and check the tick at `Import-Export: Metasequoia format(.mqo)`
 
 # Usage
-- In blender, go to 'File' and you will see 'Metasequoia (.mqo)' in 'Export' and 'Import' menu
-
-a youtube tutorial will be available
+- In blender, go to `File` and you will see `Metasequoia (.mqo)` in `Export` and `Import` menu
