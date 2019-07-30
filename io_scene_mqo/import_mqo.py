@@ -209,12 +209,16 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                 f_vert_nb = int(words[0])
                 if f_vert_nb == 2:
                     edges.append((int(words[1].strip('V(')), int(words[2].strip(')'))))
+                    f_nb = f_nb -1
+                    continue
                 elif f_vert_nb == 3:
                     faces.append((int(words[1].strip('V(')), int(words[3].strip(')')), int(words[2])))
                 elif f_vert_nb == 4:
                     faces.append((int(words[1].strip('V(')), int(words[4].strip(')')), int(words[3]), int(words[2])))
                 else:
                     dprint('error : face with %i vertex' % (f_vert_nb), debug)
+                    f_nb = f_nb -1
+                    continue
 
                 if "M(" in line:
                     for w in words:
@@ -241,7 +245,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
             elif mat and mat_nb > 0 :
                 mat_tmp = bpy.data.materials.new(words[0].strip('"'))
                 col_rgba = [1,1,1,1]
-                colm = re.search(r"col\(([0-9. ]*)\)", line)
+                colm = re.search(r" col\(([0-9. ]*)\)", line)
                 if colm:
                     colm = colm.group().split()
                     for i in range(4):
