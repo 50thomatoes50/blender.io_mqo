@@ -58,7 +58,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
 
     with open(realpath, 'rb') as fp:    # Universal read
         dprint('Importing %s' % realpath, debug)
-        e = mathutils.Euler();
+        e = mathutils.Euler()
         e.rotate_axis('X', math.radians(90))
         m = e.to_matrix()
         verts = []
@@ -79,6 +79,10 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
         f_index = 0
         f_mat = {}
         f_uv = {}
+        op_mir = False
+        op_mir_axis = []
+        op_subsurf = -1
+        op_subsurf_type = 0
 
         for lineBin in fp:
             try:
@@ -131,6 +135,19 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                         ob = bpy.data.objects.new(obj_name, me)
                         scn.objects.link(ob)
                         scn.objects.active = ob
+                        if op_mir:
+                            mod = ob.modifiers.new("Mirror", "MIRROR")
+                            if len(op_mir_axis) >0 : #nothing we can do if we have no info
+                                mod.use_x = op_mir_axis[0] #default blender is x true
+                                mod.use_y = op_mir_axis[1]
+                                mod.use_z = op_mir_axis[2]
+                        if op_subsurf_type > 0:
+                            mod = ob.modifiers.new("Subsurf", "SUBSURF")
+                            if op_subsurf_type < 3:
+                                mod.render_levels = math.ceil(op_subsurf/2)
+                            else:
+                                mod.render_levels = op_subsurf
+                            mod.use_opensubdiv = op_subsurf_type == 4
                         obj = False
                         v = False
                         v_nb = 0
@@ -144,6 +161,10 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                         faces = []
                         texverts = []
                         texfaces = []
+                        op_mir = False
+                        op_mir_axis = []
+                        op_subsurf = -1
+                        op_subsurf_type = 0
                 if mat:                             ##if end of mat import later in obj
                     dprint('end of mat', debug)
                     mat = False
@@ -168,6 +189,15 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                 dprint('begin of ver', debug)
                 v = True
                 v_nb = int(words[1])
+            elif obj and words[0] == "mirror":
+                op_mir = int(words[1]) > 0
+            elif obj and words[0] == "mirror_axis":
+                ma = int(words[1])
+                op_mir_axis = [ma&1, ma&2, ma&4 ]
+            elif obj and words[0] == "patch":
+                op_subsurf_type = int(words[1])
+            elif obj and words[0] == "segment":
+                op_subsurf = int(words[1])
             elif obj and v and v_nb != 0:           ##get vertex coor when vertex and obj
                 dprint('found a vertex', debug)
                 (x,y,z) = (float(words[0]), float(words[1]), float(words[2]))
@@ -224,6 +254,8 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                     for w in words:
                         if w.startswith("M("):
                             f_mat[f_index] = int(w.strip("M()"))
+                else: #the cat eyes do not have any material
+                    f_mat[f_index] = -1
 
                 if "UV(" in line:
                     for i in range(len(words)):
