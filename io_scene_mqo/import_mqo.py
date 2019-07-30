@@ -36,18 +36,26 @@ base source from :
 http://wiki.blender.org/index.php/Dev:2.5/Py/Scripts/Cookbook/Code_snippets/Multi-File_packages#Simple_obj_import
 """
 
-import bpy, os, math, mathutils
+import bpy
+import os
+import math
+import mathutils
+import re
+import struct
+import logging
 
 def dprint(string, debug=False):
     if debug:
-        print("\t",string)
+       logging.debug(string)
     return
 
 
 def import_mqo(op, filepath, rot90, scale, debug):
     name = os.path.basename(filepath)
     realpath = os.path.realpath(os.path.expanduser(filepath))
-    with open(realpath, 'rU') as fp:    # Universal read
+    logging.basicConfig(filename=os.path.dirname(realpath)+os.sep+'import_mqo.log', level=logging.DEBUG)
+
+    with open(realpath, 'rb') as fp:    # Universal read
         dprint('Importing %s' % realpath, debug)
         e = mathutils.Euler();
         e.rotate_axis('X', math.radians(90))
@@ -62,6 +70,7 @@ def import_mqo(op, filepath, rot90, scale, debug):
         mat_nb = 0
         mat_list = []
         v = False
+        vb = False
         v_nb = 0
         obj_name = ""
         f = False
@@ -70,21 +79,25 @@ def import_mqo(op, filepath, rot90, scale, debug):
         f_mat = {}
         f_uv = {}
 
-        for line in fp:
+        for lineBin in fp:
+            line = lineBin.decode('ascii')
             words = line.split()
             if len(words) == 0:                     ##Nothing
                 pass
             elif words[0] == "}":                       ##end of mat or obj
-                dprint('end something', debug)
+                dprint('end something %d'% (fp.tell()), debug)
                 if obj:                             ##if end of obj import it in blender
                     if v:
                         v=False
-                        dprint('end of vertex', debug)
+                        dprint('end of vertex %d'% (fp.tell()), debug)
+                    elif vb:
+                        vb=False
+                        dprint('end of Bvertex', debug)
                     elif f:
                         f=False
                         dprint('end of face', debug)
                     else:
-                        dprint('end of obj. importing :"%s"' % obj_name, debug)
+                        dprint('end of obj. importing :"%s"  %d' % (obj_name, fp.tell()), debug)
                         me = bpy.data.meshes.new(obj_name)
                         me.from_pydata(verts, [], faces)
                         me.update()
@@ -154,7 +167,26 @@ def import_mqo(op, filepath, rot90, scale, debug):
                 v_nb = v_nb -1
                 if v_nb == 0:
                     #v = False
-                    dprint('end of vertex?', debug)
+                    dprint('end of vertex? %d'% (fp.tell()), debug)
+            elif obj and words[0] == "BVertex":
+                vb = True
+                v_nb = int(words[1])
+                v_bytes = int(fp.readline().decode("ascii").split()[-1].strip("[]"))
+                #dprint('nl=%s' % fp.readline(), debug)
+                for i in range(v_nb):
+                    tmp = struct.unpack("<fff", fp.read(4*3))
+                    dprint('tmp = %s' % str(tmp), debug)
+                    if rot90:
+                        V = mathutils.Vector(tmp)
+                        vv = m*V
+                        verts.append( (scale*vv.x, scale*vv.y, scale*vv.z) )
+                    else:
+                        verts.append( (scale*tmp[0], scale*tmp[1], scale*tmp[2]) )
+                    v_nb = v_nb -1
+                    if v_nb == 0:
+                        #v = False
+                        dprint('end of vertex?', debug)
+
             elif obj and words[0] == "face":        ##detect face when obj
                 dprint('begin of face', debug)
                 f = True
@@ -165,9 +197,9 @@ def import_mqo(op, filepath, rot90, scale, debug):
                 if f_vert_nb == 2:
                     edges.append((int(words[1].strip('V(')), int(words[2].strip(')'))))
                 elif f_vert_nb == 3:
-                    faces.append((int(words[1].strip('V(')), int(words[2]), int(words[3].strip(')'))))
+                    faces.append((int(words[1].strip('V(')), int(words[3].strip(')')), int(words[2])))
                 elif f_vert_nb == 4:
-                    faces.append((int(words[1].strip('V(')), int(words[2]), int(words[3]), int(words[4].strip(')'))))
+                    faces.append((int(words[1].strip('V(')), int(words[4].strip(')')), int(words[3]), int(words[2])))
                 else:
                     dprint('error : face with %i vertex' % (f_vert_nb), debug)
 
@@ -182,9 +214,9 @@ def import_mqo(op, filepath, rot90, scale, debug):
                             if f_vert_nb == 2:
                                 f_uv[f_index] = [ float( words[i].strip("UV(")), float(words[i+1]), float(words[i+2]), float( words[i+3].strip(")"))  ]
                             elif f_vert_nb == 3:
-                                f_uv[f_index] = [ float( words[i].strip("UV(")), float(words[i+1]), float(words[i+2]), float(words[i+3]), float(words[i+4]), float( words[i+5].strip(")"))  ]
+                                f_uv[f_index] = [ float( words[i].strip("UV(")), float(words[i+1]), float(words[i+4]), float( words[i+5].strip(")")), float(words[i+2]), float(words[i+3])  ]
                             elif f_vert_nb == 4:
-                                f_uv[f_index] = [ float( words[i].strip("UV(")), float(words[i+1]), float(words[i+2]), float(words[i+3]), float(words[i+4]), float(words[i+5]), float(words[i+6]), float( words[i+7].strip(")"))  ]
+                                f_uv[f_index] = [ float( words[i].strip("UV(")), float(words[i+1]), float(words[i+6]), float( words[i+7].strip(")")), float(words[i+4]), float(words[i+5]), float(words[i+2]), float(words[i+3])  ]
                             else:
                                 dprint('error : face UV with %i vertex' %(f_vert_nb), debug)
 
@@ -195,15 +227,29 @@ def import_mqo(op, filepath, rot90, scale, debug):
                     dprint('end of face?', debug)
             elif mat and mat_nb > 0 :
                 mat_tmp = bpy.data.materials.new(words[0].strip('"'))
-                mat_tmp.diffuse_color = (float(words[2].strip('col(')), float(words[3]), float(words[4]))
-                mat_tmp.diffuse_intensity = float(words[6].strip('dif()'))
-                mat_tmp.ambient = float(words[7].strip('amb()'))
-                mat_tmp.emit = float(words[8].strip('emi()'))
-                mat_tmp.specular_intensity = float(words[9].strip('spc()'))
-                mat_tmp.specular_intensity = float(words[10].strip('power()'))
-                if float(words[5].strip(')')) < 1.0:
+                col_rgba = [1,1,1,1]
+                colm = re.search(r"col\(([0-9. ]*)\)", line)
+                if colm:
+                    colm = colm.group().split()
+                    for i in range(4):
+                        col_rgba[i] = float(colm[i].strip('col()'))
+                mat_tmp.diffuse_color = (col_rgba[0], col_rgba[1], col_rgba[2])
+                if col_rgba[3] < 1.0:
                     mat_tmp.use_transparency = True
-                    mat_tmpd = float(words[5].strip(')'))
+                    mat_tmp.alpha = col_rgba[2]
+
+                for w in words:
+                    if w.startswith("dif("):
+                        mat_tmp.diffuse_intensity = float(w.strip('dif()'))
+                    elif w.startswith("amb("):
+                        mat_tmp.ambient = float(w.strip('amb()'))
+                    elif w.startswith("emi("):
+                        mat_tmp.emit = float(w.strip('emi()'))
+                    elif w.startswith("spc("):
+                        mat_tmp.specular_intensity = float(w.strip('spc()'))
+                    elif w.startswith("power("):
+                        mat_tmp.specular_intensity = float(w.strip('power()'))
+
                 mat_list.append(mat_tmp)
 
                 if "tex(" in line:

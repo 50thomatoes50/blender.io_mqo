@@ -26,6 +26,7 @@ bl_info = {
     "name": "Metasequoia format (.mqo)",
     "author": "Thomas Portassau (50thomatoes50), sapper-trle@github, jacquesmn@github",
     "blender": (2, 65, 0),
+    "version": (0, 1, 0),
     "location": "File > Import-Export",
     "description": "Import-Export MQO, UV's, "
                    "materials and textures",
@@ -59,7 +60,7 @@ from bpy_extras.io_utils import (ExportHelper,
 
 class ExportMQO(bpy.types.Operator, ExportHelper):
     bl_idname = "io_export_scene.mqo"
-    bl_description = 'Export from mqo file format (.mqo)'
+    bl_description = 'Export to Metasequoia file format (.mqo)'
     bl_label = "Export mqo"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -95,7 +96,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
 
     uv_cor = bpy.props.BoolProperty(
         name = "Convert UV",
-        description="invert UV map to be in the direction has metasequoia",
+        description="Invert UV map to be in the same direction has metasequoia",
         default = True)
 
     mat_exp = bpy.props.BoolProperty(
@@ -152,7 +153,7 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
 
 class ImportMQO(bpy.types.Operator, ExportHelper):
     bl_idname = "io_import_scene.mqo"
-    bl_description = 'Import from mqo file format (.mqo)'
+    bl_description = 'Import from Metasequoia file format (.mqo)'
     bl_label = "Import mqo"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -174,7 +175,7 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
     debug = bpy.props.BoolProperty(
         name = "Show debug text",
         description="Print debug text to console",
-        default = False)
+        default = True)
 
     def execute(self, context):
         msg = ".mqo import: Opening %s"% self.properties.filepath
