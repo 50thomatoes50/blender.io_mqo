@@ -30,7 +30,7 @@ bl_info = {
     "location": "File > Import-Export",
     "description": "Import-Export MQO, UV's, "
                    "materials and textures",
-    "warning": "",
+    "warning": "Work In Progress, never use the exported file to overwrite original Metasequoia files",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/"
                 "Scripts/Import-Export/MQO",
     "tracker_url": "https://github.com/50thomatoes50/blender.io_mqo/issues",
@@ -172,10 +172,19 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
         description="Blender up axis is Z but metasequoia up axis is Y\nExporter will invert value to be in the correcte direction",
         default = True)
 
+    txtenc = bpy.props.EnumProperty(
+        name="Text encoding", description="Set the text encoding used to write the file (ignored for 4.7+)",
+        default='ascii', items=[
+            ('ascii', "Ascii", ""),
+            ('cp1252', "CP1252", "Code Page 1252 Western Europe"),
+            ('shift_jis', "Shift JIS", "Shift Japanese Industrial Standards"),
+            ('utf_8', "UTF8", ""),
+        ])
+
     debug = bpy.props.BoolProperty(
         name = "Show debug text",
         description="Print debug text to console",
-        default = True)
+        default = False)
 
     def execute(self, context):
         msg = ".mqo import: Opening %s"% self.properties.filepath
@@ -191,12 +200,13 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
         print(msg)
         self.report({'INFO'}, msg)
         from . import import_mqo
-        import_mqo.import_mqo(self,
+        r = import_mqo.import_mqo(self,
             self.properties.filepath,
             self.rot90,
             self.scale,
+            self.txtenc,
             self.debug)
-        return {'FINISHED'}
+        return {r[0]}
 
 def menu_func_import(self, context):
     self.layout.operator(ImportMQO.bl_idname, text="Metasequoia (.mqo)")

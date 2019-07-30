@@ -50,10 +50,11 @@ def dprint(string, debug=False):
     return
 
 
-def import_mqo(op, filepath, rot90, scale, debug):
+def import_mqo(op, filepath, rot90, scale, txtenc, debug):
     name = os.path.basename(filepath)
     realpath = os.path.realpath(os.path.expanduser(filepath))
-    logging.basicConfig(filename=os.path.dirname(realpath)+os.sep+'import_mqo.log', level=logging.DEBUG)
+    if debug:
+        logging.basicConfig(filename=os.path.dirname(realpath)+os.sep+'import_mqo.log', level=logging.DEBUG)
 
     with open(realpath, 'rb') as fp:    # Universal read
         dprint('Importing %s' % realpath, debug)
@@ -80,7 +81,11 @@ def import_mqo(op, filepath, rot90, scale, debug):
         f_uv = {}
 
         for lineBin in fp:
-            line = lineBin.decode('ascii')
+            try:
+                line = lineBin.decode(txtenc)
+            except UnicodeDecodeError as e:
+                op.report({'ERROR'}, "Choose the right text incoding in the importer\n'%s'"%(e))
+                return ["CANCELLED"]
             words = line.split()
             if len(words) == 0:                     ##Nothing
                 pass
@@ -143,6 +148,14 @@ def import_mqo(op, filepath, rot90, scale, debug):
                     dprint('end of mat', debug)
                     mat = False
 
+            elif words[0] == 'CodePage':
+                if words[1] == "utf8":
+                    txtenc = "utf_8"
+                elif words[1] == "932":
+                    txtenc = "shift_jis"
+                elif words[1] == "1252":
+                    txtenc = "cp1252"
+                dprint('text encoding changed to  :%s' % (txtenc), debug)
             elif words[0] == 'Object':              ##detect an object
                 dprint('begin of obj :%s' % words[1], debug)
                 obj = True
@@ -171,7 +184,7 @@ def import_mqo(op, filepath, rot90, scale, debug):
             elif obj and words[0] == "BVertex":
                 vb = True
                 v_nb = int(words[1])
-                v_bytes = int(fp.readline().decode("ascii").split()[-1].strip("[]"))
+                v_bytes = int(fp.readline().decode(txtenc).split()[-1].strip("[]"))
                 #dprint('nl=%s' % fp.readline(), debug)
                 for i in range(v_nb):
                     tmp = struct.unpack("<fff", fp.read(4*3))
@@ -351,4 +364,4 @@ def import_mqo(op, filepath, rot90, scale, debug):
         msg = ".mqo import: Import finished"
         print(msg, "\n")
         op.report({'INFO'}, msg)
-    return
+    return ['FINISHED']
