@@ -118,7 +118,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                                 me.polygons[fmk].material_index = f_mat[fmk]
 
                         if len(f_uv):
-                            uvtexture = me.uv_textures.new()
+                            uvtexture = me.uv_layers.new()
                             uvtexture.name = "MainUV"
 
                             uvlayer = me.uv_layers[-1]
@@ -131,10 +131,11 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
 
                                 start += len(faces[i])
 
-                        scn = bpy.context.scene
+                        scn = bpy.context.collection
                         ob = bpy.data.objects.new(obj_name, me)
                         scn.objects.link(ob)
-                        scn.objects.active = ob
+                        ob.select_set(True)
+                        # bpy.context.view_layer.objects.active = ob
                         if op_mir:
                             mod = ob.modifiers.new("Mirror", "MIRROR")
                             if len(op_mir_axis) >0 : #nothing we can do if we have no info
@@ -147,7 +148,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                                 mod.render_levels = math.ceil(op_subsurf/2)
                             else:
                                 mod.render_levels = op_subsurf
-                            mod.use_opensubdiv = op_subsurf_type == 4
+                            # mod.use_opensubdiv = op_subsurf_type == 4 #do not exist anymore?
                         obj = False
                         v = False
                         v_nb = 0
@@ -203,7 +204,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                 (x,y,z) = (float(words[0]), float(words[1]), float(words[2]))
                 if rot90:
                     V = mathutils.Vector((x,y,z))
-                    vv = m*V
+                    vv = m @ V
                     verts.append( (scale*vv.x, scale*vv.y, scale*vv.z) )
                 else:
                     verts.append( (scale*x, scale*y, scale*z) )
@@ -221,7 +222,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                     dprint('tmp = %s' % str(tmp), debug)
                     if rot90:
                         V = mathutils.Vector(tmp)
-                        vv = m*V
+                        vv = m @ V
                         verts.append( (scale*vv.x, scale*vv.y, scale*vv.z) )
                     else:
                         verts.append( (scale*tmp[0], scale*tmp[1], scale*tmp[2]) )
@@ -280,24 +281,29 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                 colm = re.search(r" col\(([0-9. ]*)\)", line)
                 if colm:
                     colm = colm.group().split()
+                    dprint(' colm : '+ str(colm), debug)
                     for i in range(4):
                         col_rgba[i] = float(colm[i].strip('col()'))
-                mat_tmp.diffuse_color = (col_rgba[0], col_rgba[1], col_rgba[2])
+                dprint('final col_rgba : '+ str(col_rgba), debug)
+                mat_tmp.diffuse_color = col_rgba
                 if col_rgba[3] < 1.0:
                     mat_tmp.use_transparency = True
                     mat_tmp.alpha = col_rgba[2]
+                    #TODO FIX
 
-                for w in words:
-                    if w.startswith("dif("):
-                        mat_tmp.diffuse_intensity = float(w.strip('dif()'))
-                    elif w.startswith("amb("):
-                        mat_tmp.ambient = float(w.strip('amb()'))
-                    elif w.startswith("emi("):
-                        mat_tmp.emit = float(w.strip('emi()'))
-                    elif w.startswith("spc("):
-                        mat_tmp.specular_intensity = float(w.strip('spc()'))
-                    elif w.startswith("power("):
-                        mat_tmp.specular_intensity = float(w.strip('power()'))
+                #TODO FIX
+                # for w in words:
+                #     if w.startswith("dif("):
+                #         mat_tmp.diffuse_intensity = float(w.strip('dif()'))
+                #         pass
+                #     elif w.startswith("amb("):
+                #         mat_tmp.ambient = float(w.strip('amb()'))
+                #     elif w.startswith("emi("):
+                #         mat_tmp.emit = float(w.strip('emi()'))
+                #     elif w.startswith("spc("):
+                #         mat_tmp.specular_intensity = float(w.strip('spc()'))
+                #     elif w.startswith("power("):
+                #         mat_tmp.specular_intensity = float(w.strip('power()'))
 
                 mat_list.append(mat_tmp)
 

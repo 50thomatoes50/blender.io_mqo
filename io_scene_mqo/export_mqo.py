@@ -99,10 +99,10 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
         for mat in me.materials:
             inte_mat = mat_extract(op, mat, tmp_mat, inte_mat)
 
-    me.update(False, True)
+    me.update(calc_edges=True, calc_edges_loose=True, calc_loop_triangles=False)
     has_vcol = False
-    if bool(me.tessface_vertex_colors):
-        vcol = me.tessface_vertex_colors.active
+    if bool(me.vertex_colors):
+        vcol = me.vertex_colors.active
         if vcol:
             vcol = vcol.data
             has_vcol = True
@@ -118,14 +118,14 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
     for v in me.vertices:
         if rot90:
             # rotate -90 degrees about X axis
-            vv = m*v.co
+            vv = m @ v.co
             fw.append("\t\t%.5f %.5f %.5f\n" % (vv[0]*scale, vv[1]*scale, vv[2]*scale))
         else:
             fw.append("\t\t%.5f %.5f %.5f\n" % (v.co[0]*scale, v.co[1]*scale, v.co[2]*scale))
     fw.append("\t}\n")
 
-    me.update(False, True)
-    faces = me.tessfaces
+    me.update(calc_edges=True, calc_edges_loose=True, calc_loop_triangles=False)
+    faces = me.polygons
     lostEdges = 0
     for e in me.edges:
         if e.is_loose:
@@ -138,7 +138,7 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
     else:
         fw.append("\tface %i {\n" % (len(faces)))
 
-    me.update(False, True)
+    me.update(calc_edges=True, calc_edges_loose=True, calc_loop_triangles=False)
     for i, f in enumerate(faces):
         vs = f.vertices
         if len(f.vertices) == 3:
@@ -155,7 +155,7 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
         fw.append(" M(%d)" % (f.material_index+inte_mat_obj))
 
         try:
-            data = me.tessface_uv_textures.active.data[f.index]
+            data = me.uv_layers.active.data[f.index]
             if (uv_exp):
                 if not invert:
                     if len(f.vertices) == 3:
@@ -218,21 +218,24 @@ def mat_extract(op, mat, tmp, index):
     msg = ".mqo export: added mat %s / index #%i" % (mat.name,index)
     print(msg)
     op.report({'INFO'}, msg)
-    l = "\t\"%s\" col(%.3f %.3f %.3f %.3f) dif(%.3f) amb(%.3f) emi(%.3f) spc(%.3f) power(5) vcol(%d)" % (mat.name, mat.diffuse_color[0], mat.diffuse_color[1], mat.diffuse_color[2], mat.alpha, mat.diffuse_intensity, mat.ambient, mat.emit, mat.specular_intensity, mat.use_vertex_color_paint)
-    for tex in mat.texture_slots.values():
-        if tex != None:
-            if tex.use and tex.texture.type == 'IMAGE' and tex.texture.image != None:
-                if tex.use_map_alpha and alpha == '' :
-                    if tex.texture.image.filepath.find("//") != -1:
-                        alpha = tex.texture.image.name
-                    else:
-                        alpha = tex.texture.image.filepath
-                if tex.use_map_color_diffuse and diffuse == '' :
-                    if tex.texture.image.filepath.find("//") != -1:
-                        diffuse = tex.texture.image.name
-                    else:
-                        diffuse = tex.texture.image.filepath
-    l = l +  " tex(\"" + diffuse + "\") aplane(\"" + alpha + "\")"
+    alpha = 1
+    l = "\t\"%s\" col(%.3f %.3f %.3f %.3f) dif(%.3f) amb(%.3f) emi(%.3f) spc(%.3f) power(5) vcol(%d)" % (mat.name, mat.diffuse_color[0], mat.diffuse_color[1], mat.diffuse_color[2], alpha, 0.8, 0.6, 0.0, 0.0, 0)
+
+    # mat.node_tree.nodes.keys()
+    # for tex in mat.texture_slots.values():
+    #     if tex != None:
+    #         if tex.use and tex.texture.type == 'IMAGE' and tex.texture.image != None:
+    #             if tex.use_map_alpha and alpha == '' :
+    #                 if tex.texture.image.filepath.find("//") != -1:
+    #                     alpha = tex.texture.image.name
+    #                 else:
+    #                     alpha = tex.texture.image.filepath
+    #             if tex.use_map_color_diffuse and diffuse == '' :
+    #                 if tex.texture.image.filepath.find("//") != -1:
+    #                     diffuse = tex.texture.image.name
+    #                 else:
+    #                     diffuse = tex.texture.image.filepath
+    # l = l +  " tex(\"" + diffuse + "\") aplane(\"" + alpha + "\")"
 
     tmp.append(l+"\n")
     return index + 1
@@ -256,11 +259,11 @@ def modif(op, modifiers):
                 tmp.append("\tmirror 2\n\tmirror_dis %.3f\n" % mod.merge_threshold)
             else:
                 tmp.append("\tmirror 1\n")
-            if mod.use_x:
+            if mod.use_axis[0]:
                 axis = 1
-            if mod.use_y:
+            if mod.use_axis[1]:
                 axis = axis + 2
-            if mod.use_z:
+            if mod.use_axis[2]:
                 axis = axis + 4
         if mod.type == "SUBSURF":
             msg = ".mqo export: exporting subsurf"

@@ -25,8 +25,8 @@
 bl_info = {
     "name": "Metasequoia format (.mqo)",
     "author": "Thomas Portassau (50thomatoes50), sapper-trle@github, jacquesmn@github",
-    "blender": (2, 65, 0),
-    "version": (0, 1, 0),
+    "blender": (2, 80, 0),
+    "version": (0, 2, 0),
     "location": "File > Import-Export",
     "description": "Import-Export MQO, UV's, "
                    "materials and textures",
@@ -53,13 +53,14 @@ from bpy.props import (BoolProperty,
                        EnumProperty,
                        )
 from bpy_extras.io_utils import (ExportHelper,
+                                 ImportHelper,
                                  path_reference_mode,
                                  axis_conversion,
                                  )
 
 
-class ExportMQO(bpy.types.Operator, ExportHelper):
-    bl_idname = "io_export_scene.mqo"
+class SCRIPT_OT_export_mqo(bpy.types.Operator, ExportHelper):
+    bl_idname = "script.export_mqo"
     bl_description = 'Export to Metasequoia file format (.mqo)'
     bl_label = "Export mqo"
     bl_space_type = "PROPERTIES"
@@ -69,47 +70,47 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
     filename_ext = ".mqo"
     filter_glob = StringProperty(default="*.mqo", options={'HIDDEN'})
 
-    scale = bpy.props.FloatProperty(
+    scale: bpy.props.FloatProperty(
         name = "Scale",
         description="Scale mesh. Value > 1 means bigger, value < 1 means smaller",
         default = 1, min = 0.001, max = 1000.0)
 
-    rot90 = bpy.props.BoolProperty(
+    rot90: bpy.props.BoolProperty(
         name = "Up axis correction",
         description="Blender up axis is Z but metasequoia up axis is Y\nExporter will invert value to be in the correcte direction",
         default = True)
 
-    invert = bpy.props.BoolProperty(
+    invert: bpy.props.BoolProperty(
         name = "Correction of inverted faces",
         description="Correction of inverted faces",
         default = True)
 
-    edge = bpy.props.BoolProperty(
+    edge: bpy.props.BoolProperty(
         name = "Export lost edge",
         description="Export edge with is not attached to a polygon",
         default = True)
 
-    uv_exp = bpy.props.BoolProperty(
+    uv_exp: bpy.props.BoolProperty(
         name = "Export UV",
         description="Export UV",
         default = True)
 
-    uv_cor = bpy.props.BoolProperty(
+    uv_cor: bpy.props.BoolProperty(
         name = "Convert UV",
-        description="Invert UV map to be in the same direction has metasequoia",
+        description="invert UV map to be in the direction has metasequoia",
         default = True)
 
-    mat_exp = bpy.props.BoolProperty(
+    mat_exp: bpy.props.BoolProperty(
         name = "Export Materials",
         description="...",
         default = True)
 
-    mod_exp = bpy.props.BoolProperty(
+    mod_exp: bpy.props.BoolProperty(
         name = "Export Modifier",
         description="Export modifier like mirror or/and subdivision surface",
         default = True)
 
-    vcol_exp = bpy.props.BoolProperty(
+    vcol_exp: bpy.props.BoolProperty(
         name = "Export Vertex Colors",
         description="Export vertex colors",
         default = True)
@@ -151,28 +152,28 @@ class ExportMQO(bpy.types.Operator, ExportHelper):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
-class ImportMQO(bpy.types.Operator, ExportHelper):
-    bl_idname = "io_import_scene.mqo"
+class SCRIPT_OT_import_mqo(bpy.types.Operator, ImportHelper):
+    bl_idname = "script.import_mqo"
     bl_description = 'Import from Metasequoia file format (.mqo)'
     bl_label = "Import mqo"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
 
-    # From ExportHelper. Filter filenames.
+    # From ImportHelper. Filter filenames.
     filename_ext = ".mqo"
-    filter_glob = StringProperty(default="*.mqo", options={'HIDDEN'})
+    filter_glob: StringProperty(default="*.mqo", options={'HIDDEN'})
 
-    scale = bpy.props.FloatProperty(
+    scale: bpy.props.FloatProperty(
         name = "Scale",
         description="Scale mesh. Value > 1 means bigger, value < 1 means smaller",
         default = 1, min = 0.001, max = 1000.0)
 
-    rot90 = bpy.props.BoolProperty(
+    rot90: bpy.props.BoolProperty(
         name = "Up axis correction",
         description="Blender up axis is Z but metasequoia up axis is Y\nExporter will invert value to be in the correcte direction",
         default = True)
 
-    txtenc = bpy.props.EnumProperty(
+    txtenc: bpy.props.EnumProperty(
         name="Text encoding", description="Set the text encoding used to write the file (ignored for 4.7+)",
         default='ascii', items=[
             ('ascii', "Ascii", ""),
@@ -181,7 +182,7 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
             ('utf_8', "UTF8", ""),
         ])
 
-    debug = bpy.props.BoolProperty(
+    debug: bpy.props.BoolProperty(
         name = "Show debug text",
         description="Print debug text to console",
         default = False)
@@ -209,25 +210,33 @@ class ImportMQO(bpy.types.Operator, ExportHelper):
         return {r[0]}
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportMQO.bl_idname, text="Metasequoia (.mqo)")
+    self.layout.operator(SCRIPT_OT_import_mqo.bl_idname, text="Metasequoia (.mqo)")
 
 
 def menu_func_export(self, context):
-    self.layout.operator(ExportMQO.bl_idname, text="Metasequoia (.mqo)")
+    self.layout.operator(SCRIPT_OT_export_mqo.bl_idname, text="Metasequoia (.mqo)")
 
+classes = (SCRIPT_OT_import_mqo,
+SCRIPT_OT_export_mqo
+)
 
 def register():
-    bpy.utils.register_module(__name__)
+    #bpy.utils.register_module(__name__)
+    for c in classes:
+        bpy.utils.register_class(c)
 
-    bpy.types.INFO_MT_file_import.append(menu_func_import)
-    bpy.types.INFO_MT_file_export.append(menu_func_export)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
+    #bpy.utils.unregister_module(__name__)
+    for c in reversed(classes):
+        bpy.utils.unregister_class(c)
 
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    bpy.types.INFO_MT_file_export.remove(menu_func_export)
+
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
 
 if __name__ == "__main__":
     register()
