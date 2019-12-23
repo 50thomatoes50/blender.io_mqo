@@ -43,6 +43,7 @@ import mathutils
 import re
 import struct
 import logging
+import numpy
 
 def dprint(string, debug=False):
     if debug:
@@ -245,9 +246,17 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                 elif f_vert_nb == 4:
                     faces.append((int(words[1].strip('V(')), int(words[4].strip(')')), int(words[3]), int(words[2])))
                 else:
-                    dprint('error : face with %i vertex' % (f_vert_nb), debug)
-                    f_nb = f_nb -1
-                    continue
+                    fm = re.search(r"(\d+) V\((\d+)(( \d+)+)", line)
+                    vfcount = int(fm.group(1))
+                    vf = [int(fm.group(2))]
+                    for vstr in fm.group(3).strip().split(" "):
+                        vf.append(int(vstr) )
+                    if len(vf) == vfcount:
+                        faces.append(numpy.flip(vf))
+                    else:
+                        dprint('error : invalid decoding face with %i vertex' % (f_vert_nb), debug)
+                        f_nb = f_nb -1
+                        continue
 
                 if "M(" in line:
                     for w in words:
