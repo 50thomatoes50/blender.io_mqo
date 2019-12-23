@@ -82,6 +82,9 @@ def export_mqo(op, filepath, objects, rot90, invert, edge, uv_exp, uv_cor, mat_e
     return
 
 def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, inte_mat, tmp_mat, mod_exp, vcol_exp):
+    oldObjMod = ob.mode
+    if ob.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
     me = ob.data
     pi = 3.141594
     if mod_exp:
@@ -208,6 +211,8 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
     fw.append("\t}\n")
 
     fw.append("}\n")
+    if oldObjMod != ob.mode:
+        bpy.ops.object.mode_set(mode=oldObjMod, toggle=False)
     return inte_mat, fw
 
 
