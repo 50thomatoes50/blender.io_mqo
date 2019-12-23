@@ -118,7 +118,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                                 me.polygons[fmk].material_index = f_mat[fmk]
 
                         if len(f_uv):
-                            uvtexture = me.uv_textures.new()
+                            uvtexture = me.uv_layers.new()
                             uvtexture.name = "MainUV"
 
                             uvlayer = me.uv_layers[-1]
@@ -131,23 +131,22 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
 
                                 start += len(faces[i])
 
-                        scn = bpy.context.scene
+                        scn = bpy.context.collection
                         ob = bpy.data.objects.new(obj_name, me)
                         scn.objects.link(ob)
-                        scn.objects.active = ob
+                        ob.select_set(True)
+                        # bpy.context.view_layer.objects.active = ob
                         if op_mir:
                             mod = ob.modifiers.new("Mirror", "MIRROR")
                             if len(op_mir_axis) >0 : #nothing we can do if we have no info
-                                mod.use_x = op_mir_axis[0] #default blender is x true
-                                mod.use_y = op_mir_axis[1]
-                                mod.use_z = op_mir_axis[2]
+                                mod.use_axis = op_mir_axis
                         if op_subsurf_type > 0:
                             mod = ob.modifiers.new("Subsurf", "SUBSURF")
                             if op_subsurf_type < 3:
                                 mod.render_levels = math.ceil(op_subsurf/2)
                             else:
                                 mod.render_levels = op_subsurf
-                            mod.use_opensubdiv = op_subsurf_type == 4
+                            # mod.use_opensubdiv = op_subsurf_type == 4 #do not exist anymore?
                         obj = False
                         v = False
                         v_nb = 0
@@ -193,7 +192,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                 op_mir = int(words[1]) > 0
             elif obj and words[0] == "mirror_axis":
                 ma = int(words[1])
-                op_mir_axis = [ma&1, ma&2, ma&4 ]
+                op_mir_axis = [ bool(ma&1), bool(ma&4), bool(ma&2) ] #[X,Z,Y]
             elif obj and words[0] == "patch":
                 op_subsurf_type = int(words[1])
             elif obj and words[0] == "segment":
@@ -203,7 +202,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                 (x,y,z) = (float(words[0]), float(words[1]), float(words[2]))
                 if rot90:
                     V = mathutils.Vector((x,y,z))
-                    vv = m*V
+                    vv = m @ V
                     verts.append( (scale*vv.x, scale*vv.y, scale*vv.z) )
                 else:
                     verts.append( (scale*x, scale*y, scale*z) )
@@ -221,7 +220,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                     dprint('tmp = %s' % str(tmp), debug)
                     if rot90:
                         V = mathutils.Vector(tmp)
-                        vv = m*V
+                        vv = m @ V
                         verts.append( (scale*vv.x, scale*vv.y, scale*vv.z) )
                     else:
                         verts.append( (scale*tmp[0], scale*tmp[1], scale*tmp[2]) )
@@ -280,114 +279,122 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                 colm = re.search(r" col\(([0-9. ]*)\)", line)
                 if colm:
                     colm = colm.group().split()
+                    dprint(' colm : '+ str(colm), debug)
                     for i in range(4):
                         col_rgba[i] = float(colm[i].strip('col()'))
-                mat_tmp.diffuse_color = (col_rgba[0], col_rgba[1], col_rgba[2])
+                dprint('final col_rgba : '+ str(col_rgba), debug)
+                mat_tmp.diffuse_color = col_rgba
                 if col_rgba[3] < 1.0:
                     mat_tmp.use_transparency = True
                     mat_tmp.alpha = col_rgba[2]
+                    #TODO FIX
 
-                for w in words:
-                    if w.startswith("dif("):
-                        mat_tmp.diffuse_intensity = float(w.strip('dif()'))
-                    elif w.startswith("amb("):
-                        mat_tmp.ambient = float(w.strip('amb()'))
-                    elif w.startswith("emi("):
-                        mat_tmp.emit = float(w.strip('emi()'))
-                    elif w.startswith("spc("):
-                        mat_tmp.specular_intensity = float(w.strip('spc()'))
-                    elif w.startswith("power("):
-                        mat_tmp.specular_intensity = float(w.strip('power()'))
+                #TODO FIX
+                # for w in words:
+                #     if w.startswith("dif("):
+                #         mat_tmp.diffuse_intensity = float(w.strip('dif()'))
+                #         pass
+                #     elif w.startswith("amb("):
+                #         mat_tmp.ambient = float(w.strip('amb()'))
+                #     elif w.startswith("emi("):
+                #         mat_tmp.emit = float(w.strip('emi()'))
+                #     elif w.startswith("spc("):
+                #         mat_tmp.specular_intensity = float(w.strip('spc()'))
+                #     elif w.startswith("power("):
+                #         mat_tmp.specular_intensity = float(w.strip('power()'))
 
                 mat_list.append(mat_tmp)
 
-                if "tex(" in line:
-                    tex_filename = ""
-                    for w in words:
-                        if w.startswith("tex("):
-                            tex_filename = w[5 : -2]
-                            break
+                # TODO fix implementation for bpy 2.80
 
-                    bltex = bpy.data.textures.new( tex_filename , "IMAGE")
-                    bltex.__class__ = bpy.types.ImageTexture
+                # if "tex(" in line:
+                #     tex_filename = ""
+                #     for w in words:
+                #         if w.startswith("tex("):
+                #             tex_filename = w[5 : -2]
+                #             break
 
-                    if os.path.isfile(tex_filename):
-                        #direct ie: C:\data .....
-                        bltex.image = bpy.data.images.load(tex_filename)
-                    elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + tex_filename):
-                        imgfile = os.path.dirname(filepath) + os.path.sep + tex_filename
-                        bltex.image = bpy.data.images.load(imgfile)
-                    elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Texture"+ os.path.sep + tex_filename):
-                        bltex.image = bpy.data.images.load(os.path.dirname(filepath) + os.path.sep + "Texture"+ os.path.sep + tex_filename)
-                    else:
-                        print("Can't find Texture file = %s"%(tex_filename))
-                        print(tex_filename+" = ",os.path.isfile(tex_filename))
-                        print(os.path.dirname(realpath) + os.path.sep + tex_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + tex_filename))
-                        print(os.path.dirname(filepath) + os.path.sep + "Texture"+ os.path.sep + tex_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Texture"+ os.path.sep + tex_filename))
+                #     bltex = bpy.data.textures.new( tex_filename , "IMAGE")
+                #     bltex.__class__ = bpy.types.ImageTexture
 
-                    bltexslot = mat_tmp.texture_slots.create(0)
-                    bltexslot.texture_coords = "UV"
-                    bltexslot.texture = bltex
+                #     if os.path.isfile(tex_filename):
+                #         #direct ie: C:\data .....
+                #         bltex.image = bpy.data.images.load(tex_filename)
+                #     elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + tex_filename):
+                #         imgfile = os.path.dirname(filepath) + os.path.sep + tex_filename
+                #         bltex.image = bpy.data.images.load(imgfile)
+                #     elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Texture"+ os.path.sep + tex_filename):
+                #         bltex.image = bpy.data.images.load(os.path.dirname(filepath) + os.path.sep + "Texture"+ os.path.sep + tex_filename)
+                #     else:
+                #         print("Can't find Texture file = %s"%(tex_filename))
+                #         print(tex_filename+" = ",os.path.isfile(tex_filename))
+                #         print(os.path.dirname(realpath) + os.path.sep + tex_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + tex_filename))
+                #         print(os.path.dirname(filepath) + os.path.sep + "Texture"+ os.path.sep + tex_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Texture"+ os.path.sep + tex_filename))
 
-                if "aplane(" in line:
-                    texa_filename = ""
-                    for w in words:
-                        if w.startswith("aplane("):
-                            texa_filename = w[8:-2]
-                            break
 
-                    bltex = bpy.data.textures.new( texa_filename , "IMAGE")
-                    bltex.__class__ = bpy.types.ImageTexture
+                #     bltexslot = mat_tmp.texture_slots.create(0)
+                #     bltexslot.texture_coords = "UV"
+                #     bltexslot.texture = bltex
 
-                    if os.path.isfile(texa_filename):
-                        #direct ie: C:\data .....
-                        bltex.image = bpy.data.images.load(texa_filename)
-                    elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + texa_filename):
-                        imgfile = os.path.dirname(filepath) + os.path.sep + texa_filename
-                        bltex.image = bpy.data.images.load(imgfile)
-                    elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Alpha" + os.path.sep + texa_filename):
-                        bltex.image = bpy.data.images.load(os.path.dirname(filepath) + os.path.sep + "Alpha"+ os.path.sep + texa_filename)
-                    else:
-                        print("Can't find Alpha Texture file = %s"%(texa_filename))
-                        print(texa_filename+" = ",os.path.isfile(texa_filename))
-                        print(os.path.dirname(realpath) + os.path.sep + texa_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + texa_filename))
-                        print(os.path.dirname(filepath) + os.path.sep + "Alpha" + os.path.sep + texa_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Alpha" + os.path.sep + texa_filename))
+                # if "aplane(" in line:
+                #     texa_filename = ""
+                #     for w in words:
+                #         if w.startswith("aplane("):
+                #             texa_filename = w[8:-2]
+                #             break
 
-                    bltexslot = mat_tmp.texture_slots.create(1)
-                    bltexslot.use_map_color_diffuse = False
-                    bltexslot.use_map_alpha = True
-                    bltexslot.texture_coords = "UV"
-                    bltexslot.texture = bltex
+                #     bltex = bpy.data.textures.new( texa_filename , "IMAGE")
+                #     bltex.__class__ = bpy.types.ImageTexture
 
-                if "bump(" in line:
-                    texb_filename = ""
-                    for w in words:
-                        if w.startswith("bump("):
-                            texb_filename = w[ 6 : -2]
-                            break
+                #     if os.path.isfile(texa_filename):
+                #         #direct ie: C:\data .....
+                #         bltex.image = bpy.data.images.load(texa_filename)
+                #     elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + texa_filename):
+                #         imgfile = os.path.dirname(filepath) + os.path.sep + texa_filename
+                #         bltex.image = bpy.data.images.load(imgfile)
+                #     elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Alpha" + os.path.sep + texa_filename):
+                #         bltex.image = bpy.data.images.load(os.path.dirname(filepath) + os.path.sep + "Alpha"+ os.path.sep + texa_filename)
+                #     else:
+                #         print("Can't find Alpha Texture file = %s"%(texa_filename))
+                #         print(texa_filename+" = ",os.path.isfile(texa_filename))
+                #         print(os.path.dirname(realpath) + os.path.sep + texa_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + texa_filename))
+                #         print(os.path.dirname(filepath) + os.path.sep + "Alpha" + os.path.sep + texa_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Alpha" + os.path.sep + texa_filename))
 
-                    bltex = bpy.data.textures.new( texb_filename , "IMAGE")
-                    bltex.__class__ = bpy.types.ImageTexture
+                #     bltexslot = mat_tmp.texture_slots.create(1)
+                #     bltexslot.use_map_color_diffuse = False
+                #     bltexslot.use_map_alpha = True
+                #     bltexslot.texture_coords = "UV"
+                #     bltexslot.texture = bltex
 
-                    if os.path.isfile(texb_filename):
-                        #direct ie: C:\data .....
-                        bltex.image = bpy.data.images.load(texb_filename)
-                    elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + texb_filename):
-                        imgfile = os.path.dirname(filepath) + os.path.sep + texb_filename
-                        bltex.image = bpy.data.images.load(imgfile)
-                    elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Bump"+ os.path.sep + texb_filename):
-                        bltex.image = bpy.data.images.load(os.path.dirname(filepath) + os.path.sep + "Bump"+ os.path.sep + texb_filename)
-                    else:
-                        print("Can't find bump Texture file = %s"%(texb_filename))
-                        print(texb_filename+" = ",os.path.isfile(texb_filename))
-                        print(os.path.dirname(realpath) + os.path.sep + texb_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + texb_filename))
-                        print(os.path.dirname(filepath) + os.path.sep + "Bump"+ os.path.sep + texb_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Bump"+ os.path.sep + texb_filename))
+                # if "bump(" in line:
+                #     texb_filename = ""
+                #     for w in words:
+                #         if w.startswith("bump("):
+                #             texb_filename = w[ 6 : -2]
+                #             break
 
-                    bltexslot = mat_tmp.texture_slots.create(2)
-                    bltexslot.use_map_color_diffuse = False
-                    bltexslot.use_map_normal = True
-                    bltexslot.texture_coords = "UV"
-                    bltexslot.texture = bltex
+                #     bltex = bpy.data.textures.new( texb_filename , "IMAGE")
+                #     bltex.__class__ = bpy.types.ImageTexture
+
+                #     if os.path.isfile(texb_filename):
+                #         #direct ie: C:\data .....
+                #         bltex.image = bpy.data.images.load(texb_filename)
+                #     elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + texb_filename):
+                #         imgfile = os.path.dirname(filepath) + os.path.sep + texb_filename
+                #         bltex.image = bpy.data.images.load(imgfile)
+                #     elif os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Bump"+ os.path.sep + texb_filename):
+                #         bltex.image = bpy.data.images.load(os.path.dirname(filepath) + os.path.sep + "Bump"+ os.path.sep + texb_filename)
+                #     else:
+                #         print("Can't find bump Texture file = %s"%(texb_filename))
+                #         print(texb_filename+" = ",os.path.isfile(texb_filename))
+                #         print(os.path.dirname(realpath) + os.path.sep + texb_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + texb_filename))
+                #         print(os.path.dirname(filepath) + os.path.sep + "Bump"+ os.path.sep + texb_filename+" = ",os.path.isfile(os.path.dirname(filepath) + os.path.sep + "Bump"+ os.path.sep + texb_filename))
+
+                #     bltexslot = mat_tmp.texture_slots.create(2)
+                #     bltexslot.use_map_color_diffuse = False
+                #     bltexslot.use_map_normal = True
+                #     bltexslot.texture_coords = "UV"
+                #     bltexslot.texture = bltex
 
                 mat_nb -=1
                 if mat_nb ==0:
