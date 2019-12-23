@@ -99,7 +99,7 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
         for mat in me.materials:
             inte_mat = mat_extract(op, mat, tmp_mat, inte_mat)
 
-    me.update(calc_edges=True, calc_edges_loose=True, calc_loop_triangles=False)
+    me.update(calc_edges=True, calc_edges_loose=True)
     has_vcol = False
     if bool(me.vertex_colors):
         vcol = me.vertex_colors.active
@@ -124,7 +124,7 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
             fw.append("\t\t%.5f %.5f %.5f\n" % (v.co[0]*scale, v.co[1]*scale, v.co[2]*scale))
     fw.append("\t}\n")
 
-    me.update(calc_edges=True, calc_edges_loose=True, calc_loop_triangles=False)
+    me.update(calc_edges=True, calc_edges_loose=True)
     faces = me.polygons
     lostEdges = 0
     for e in me.edges:
@@ -138,7 +138,7 @@ def exp_obj(op, fw, ob, rot90, invert, edge, uv_exp, uv_cor, scale, mat_exp, int
     else:
         fw.append("\tface %i {\n" % (len(faces)))
 
-    me.update(calc_edges=True, calc_edges_loose=True, calc_loop_triangles=False)
+    me.update(calc_edges=True, calc_edges_loose=True)
     for i, f in enumerate(faces):
         vs = f.vertices
         if len(f.vertices) == 3:
@@ -265,6 +265,7 @@ def modif(op, modifiers):
                 axis = axis + 2
             if mod.use_axis[2]:
                 axis = axis + 4
+            tmp.append("\tmirror_axis %d\n"% axis)
         if mod.type == "SUBSURF":
             msg = ".mqo export: exporting subsurf"
             print(msg)
