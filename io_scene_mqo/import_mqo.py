@@ -139,9 +139,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                         if op_mir:
                             mod = ob.modifiers.new("Mirror", "MIRROR")
                             if len(op_mir_axis) >0 : #nothing we can do if we have no info
-                                mod.use_x = op_mir_axis[0] #default blender is x true
-                                mod.use_y = op_mir_axis[1]
-                                mod.use_z = op_mir_axis[2]
+                                mod.use_axis = op_mir_axis
                         if op_subsurf_type > 0:
                             mod = ob.modifiers.new("Subsurf", "SUBSURF")
                             if op_subsurf_type < 3:
@@ -194,7 +192,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                 op_mir = int(words[1]) > 0
             elif obj and words[0] == "mirror_axis":
                 ma = int(words[1])
-                op_mir_axis = [ma&1, ma&2, ma&4 ]
+                op_mir_axis = [ bool(ma&1), bool(ma&2), bool(ma&4) ]
             elif obj and words[0] == "patch":
                 op_subsurf_type = int(words[1])
             elif obj and words[0] == "segment":
