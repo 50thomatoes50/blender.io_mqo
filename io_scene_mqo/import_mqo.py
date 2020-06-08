@@ -180,15 +180,15 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
             elif words[0] == 'Object':              ##detect an object
                 dprint('begin of obj :%s' % words[1], debug)
                 obj = True
-                obj_name = words[1].strip('"')
+                obj_name = words[1].strip('"{')
             elif words[0] == 'Material':            ##detect materials
                 dprint('begin of mat', debug)
                 mat = True
-                mat_nb = int(words[1].strip('"'))
+                mat_nb = int(words[1].strip('{'))
             elif obj and words[0] == "vertex":      ##detect vertex when obj
                 dprint('begin of ver', debug)
                 v = True
-                v_nb = int(words[1])
+                v_nb = int(words[1].strip('{'))
             elif obj and words[0] == "mirror":
                 op_mir = int(words[1]) > 0
             elif obj and words[0] == "mirror_axis":
@@ -213,7 +213,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                     dprint('end of vertex? %d'% (fp.tell()), debug)
             elif obj and words[0] == "BVertex":
                 vb = True
-                v_nb = int(words[1])
+                v_nb = int(words[1].strip('{'))
                 v_bytes = int(fp.readline().decode(txtenc).split()[-1].strip("[]"))
                 #dprint('nl=%s' % fp.readline(), debug)
                 for i in range(v_nb):
@@ -233,7 +233,7 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
             elif obj and words[0] == "face":        ##detect face when obj
                 dprint('begin of face', debug)
                 f = True
-                f_nb = int(words[1])
+                f_nb = int(words[1].strip('{'))
             elif obj and f and f_nb != 0:           ##get face vertex
                 dprint('found a face', debug)
                 f_vert_nb = int(words[0])
@@ -293,9 +293,9 @@ def import_mqo(op, filepath, rot90, scale, txtenc, debug):
                         col_rgba[i] = float(colm[i].strip('col()'))
                 dprint('final col_rgba : '+ str(col_rgba), debug)
                 mat_tmp.diffuse_color = col_rgba
-                if col_rgba[3] < 1.0:
-                    mat_tmp.use_transparency = True
-                    mat_tmp.alpha = col_rgba[2]
+                #if col_rgba[3] < 1.0:
+                    # mat_tmp.use_transparency = True
+                    # mat_tmp.alpha = col_rgba[2]
                     #TODO FIX
 
                 #TODO FIX

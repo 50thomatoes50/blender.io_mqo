@@ -26,7 +26,7 @@ bl_info = {
     "name": "Metasequoia format (.mqo)",
     "author": "Thomas Portassau (50thomatoes50), sapper-trle@github, jacquesmn@github",
     "blender": (2, 80, 0),
-    "version": (0, 2, 0),
+    "version": (0, 2, 1),
     "location": "File > Import-Export",
     "description": "Import-Export MQO, UV's, "
                    "materials and textures",
