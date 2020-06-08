@@ -7,26 +7,26 @@ Features | Import | Export
 --- | --- | --- |
 Basic geometry (vert,edge,tri,quad) |  :heavy_check_mark: |  :heavy_check_mark:
 UV map  |  :heavy_check_mark: |  :heavy_check_mark:
-Materials  |  :heavy_check_mark: |  :heavy_check_mark:
+Materials  |  :x: |  :x: This is broken since the port to 2.80
 Simple Modifier (Mirror / subdivision surface)  |  :soon: |  :heavy_check_mark:
 
 
 Todo
 --------------
-- Port to bpy 2.8
-- Export other thing like text (but converted in mesh) note: not sure to add this feature
-- Importer Modifier (Mirror / subdivision surface)
+- Fix material import/export
 - Metasequoia 4+ featues :
   - Use `bpy.Bmesh` to support face with 4+ vertices
-  - Bones
+  - Bones and Animation
 
 
 ___
 # Installation method
-- Click `Download ZIP`
-- Extract the folder `io_scene_mqo` in your blender folder installation (eg: "`...\Blender2.##\scripts\addons\`"
+- Click [`releases`](https://github.com/50thomatoes50/blender.io_mqo/releases)
+- Download the latest Zip ( **DO NOT USE** `Source Code (zip)` )
 - Start blender
-- Go `File` >> `User preferences...` >> `Addons` >> `Import-Export` and check the tick at `Import-Export: Metasequoia format(.mqo)`
+- Go to the menu bar `Edit` >> `Preferences...` >> `Add-ons`
+- Click the `Install...` button and use the zip downloaded previously
+- You should only see `Import-Export: Metasequoia format(.mqo)`, you need to enable it.
 
 # Usage
 - In blender, go to `File` and you will see `Metasequoia (.mqo)` in `Export` and `Import` menu
